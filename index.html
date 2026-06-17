@@ -140,6 +140,19 @@ body::after {
 /* ===== Header row + gear ===== */
 .hub-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
 .hub-head .dash-title { margin: 0; }
+.hub-head-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.sync-dot {
+  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+  background: #6BE3A4; box-shadow: 0 0 6px rgba(107,227,164,0.7);
+}
+.sync-dot.offline {
+  background: #FF5C5C; box-shadow: 0 0 6px rgba(255,92,92,0.7);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* Hide the shared topbar's water tracker/+1 button on this page only. */
+.topbar-water-wrap { display: none !important; }
 .gear-btn {
   width: 42px; height: 42px; flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
@@ -210,7 +223,10 @@ body::after {
 <div class="page">
 
   <div class="hub-head">
-    <h1 class="dash-title">Rowans Dashboard</h1>
+    <div class="hub-head-left">
+      <h1 class="dash-title">Daniels Dashboard v2</h1>
+      <span class="sync-dot" id="syncDot" title="Sync status"></span>
+    </div>
     <button class="gear-btn" id="settingsOpen" type="button" aria-label="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"/>
@@ -264,23 +280,9 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="po-water.html" style="--accent:#60A5FA">
+    <a class="tile" href="finance.html" style="--accent:#F2C063">
       <div class="tile-top">
         <span class="tile-num">·04</span>
-        <span class="tile-emoji">💧</span>
-      </div>
-      <div class="tile-spacer"></div>
-      <h2 class="tile-title">Water</h2>
-      <div class="tile-foot">
-        <span class="tile-sub">Hydration</span>
-        <span class="tile-arrow">→</span>
-      </div>
-    </a>
-
-    <!-- Wide tile -->
-    <a class="tile wide" href="finance.html" style="--accent:#F2C063">
-      <div class="tile-top">
-        <span class="tile-num">·05</span>
         <span class="tile-emoji">📊</span>
       </div>
       <div class="tile-spacer"></div>
@@ -291,10 +293,10 @@ body::after {
       </div>
     </a>
 
-    <!-- Small tile -->
-    <a class="tile" href="caffeine.html" style="--accent:#C9A36B">
+    <!-- Wide tile -->
+    <a class="tile wide" href="caffeine.html" style="--accent:#C9A36B">
       <div class="tile-top">
-        <span class="tile-num">·06</span>
+        <span class="tile-num">·05</span>
         <span class="tile-emoji">☕</span>
       </div>
       <div class="tile-spacer"></div>
@@ -308,7 +310,7 @@ body::after {
     <!-- Wide tile -->
     <a class="tile wide" href="nova-lite.html" style="--accent:#A78BFA">
       <div class="tile-top">
-        <span class="tile-num">·07</span>
+        <span class="tile-num">·06</span>
         <span class="tile-emoji">🧠</span>
       </div>
       <div class="tile-spacer"></div>
@@ -473,6 +475,18 @@ body::after {
     const s = $('settingsStatus'); s.textContent = 'Saved ✓';
     setTimeout(() => { s.textContent = ''; }, 1800);
   }
+
+  /* ---------- sync status dot ---------- */
+  function updateSyncDot() {
+    const dot = $('syncDot');
+    if (!dot) return;
+    const online = navigator.onLine;
+    dot.classList.toggle('offline', !online);
+    dot.title = online ? 'Online' : 'Offline';
+  }
+  window.addEventListener('online', updateSyncDot);
+  window.addEventListener('offline', updateSyncDot);
+  updateSyncDot();
 
   /* ---------- open / close ---------- */
   function open() { populate(); renderWhoop(); $('settingsBg').classList.add('show'); syncWhoop(); }
