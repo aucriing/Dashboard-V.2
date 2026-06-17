@@ -251,6 +251,67 @@ body::after {
   width: 0%; height: 100%; background: #00ff41;
   transition: width 2.5s linear;
 }
+
+/* ===== Morning briefing ===== */
+.briefing-modal {
+  max-width: 480px;
+  background: #0a0c0a;
+  border: 1px solid rgba(107,227,164,0.22);
+  font-family: var(--font-mono);
+  position: relative;
+}
+.briefing-close { position: absolute; top: 10px; right: 10px; }
+.briefing-clock {
+  font-size: 44px; font-weight: 700; text-align: center; color: #6BE3A4;
+  letter-spacing: 0.02em; margin: 6px 0 2px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 18px rgba(107,227,164,0.35);
+}
+.briefing-date {
+  text-align: center; font-size: 12px; letter-spacing: 0.12em;
+  color: #E8B768; margin-bottom: 12px;
+}
+.briefing-weather {
+  text-align: center; font-size: 13px; color: var(--text-secondary);
+  margin-bottom: 20px; padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.briefing-section { margin-bottom: 18px; }
+.briefing-section-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  color: #E8B768; margin-bottom: 8px;
+}
+.briefing-list { display: flex; flex-direction: column; gap: 6px; }
+.briefing-item {
+  font-size: 13px; color: var(--text-primary);
+  display: flex; align-items: center; gap: 8px;
+}
+.briefing-item input[type="checkbox"] { accent-color: #6BE3A4; flex-shrink: 0; }
+.briefing-empty { font-size: 13px; color: var(--text-tertiary); font-style: italic; }
+.briefing-add-row { display: flex; gap: 6px; margin-top: 8px; }
+.briefing-add-row input {
+  flex: 1; min-width: 0; padding: 8px 10px;
+  font-family: var(--font-mono); font-size: 12px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; color: var(--text-primary); outline: none;
+}
+.briefing-add-row button {
+  width: 34px; border-radius: 8px; border: 1px solid rgba(107,227,164,0.3);
+  background: rgba(107,227,164,0.1); color: #6BE3A4; font-size: 16px; cursor: pointer;
+}
+.briefing-quote {
+  margin-top: 4px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 12px; font-style: italic; color: var(--text-secondary);
+  text-align: center; line-height: 1.5;
+}
+.briefing-start-btn {
+  width: 100%; margin-top: 20px; padding: 14px; border: 0; border-radius: 12px;
+  background: linear-gradient(180deg, #6BE3A4, #E8B768); color: #06120a;
+  font-family: var(--font-mono); font-size: 14px; font-weight: 700; letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.briefing-start-btn:hover { filter: brightness(1.05); }
+.briefing-start-btn:active { transform: translateY(1px); }
 </style>
 </head>
 <body>
@@ -455,6 +516,16 @@ body::after {
       <input class="set-input" id="activity" type="number" min="0" inputmode="decimal" placeholder="e.g. 5">
     </div>
 
+    <div class="field">
+      <label class="field-label">Weather city</label>
+      <input class="set-input" id="weatherCity" type="text" placeholder="e.g. Berlin">
+    </div>
+
+    <div class="field">
+      <label class="field-label">OpenWeatherMap API key</label>
+      <input class="set-input" id="weatherKey" type="password" placeholder="paste your API key">
+    </div>
+
     <button class="set-save" id="settingsSave" type="button">Save</button>
     <div class="set-status" id="settingsStatus"></div>
 
@@ -476,6 +547,45 @@ body::after {
   </div>
 </div>
 
+<!-- ===== Morning briefing ===== -->
+<div class="modal-bg" id="briefingBg">
+  <div class="modal briefing-modal" role="dialog" aria-label="Morgen Briefing">
+    <button class="modal-close briefing-close" id="briefingClose" type="button" aria-label="Close">×</button>
+
+    <div class="briefing-clock" id="briefingClock">--:--</div>
+    <div class="briefing-date" id="briefingDate"></div>
+    <div class="briefing-weather" id="briefingWeather">— Wetter nicht verfügbar —</div>
+
+    <div class="briefing-section">
+      <div class="briefing-section-title">🎯 MITS HEUTE</div>
+      <div class="briefing-list" id="briefingMits"></div>
+    </div>
+
+    <div class="briefing-section">
+      <div class="briefing-section-title">⚡ 80/20 AUFGABEN</div>
+      <div class="briefing-list" id="briefing8020"></div>
+    </div>
+
+    <div class="briefing-section">
+      <div class="briefing-section-title">✅ AUSSTEHENDE ROUTINEN</div>
+      <div class="briefing-list" id="briefingRoutines"></div>
+      <div class="briefing-add-row">
+        <input type="text" id="routineInput" placeholder="Neue Routine…">
+        <button type="button" id="routineAdd">+</button>
+      </div>
+    </div>
+
+    <div class="briefing-section">
+      <div class="briefing-section-title">💊 SUPPLEMENTE — MORGENS</div>
+      <div class="briefing-list" id="briefingSupps"></div>
+    </div>
+
+    <div class="briefing-quote" id="briefingQuote"></div>
+
+    <button class="briefing-start-btn" id="briefingStart" type="button">TAG STARTEN →</button>
+  </div>
+</div>
+
 <script>
 (function () {
   'use strict';
@@ -483,6 +593,7 @@ body::after {
   const WATER_KEY = 'po_water_v1';
   const WHOOP_KEY = 'whoop_tokens_v1';
   const SYNC_KEY  = 'whoop_last_sync';
+  const WEATHER_KEY = 'weather_settings_v1';
 
   function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
   function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
@@ -540,6 +651,9 @@ body::after {
     else $('weight').value = '';
     $('age').value = p.age || '';
     $('activity').value = (p.activityHrsPerWeek != null ? p.activityHrsPerWeek : '');
+    const ws = loadJSON(WEATHER_KEY, {});
+    $('weatherCity').value = ws.city || '';
+    $('weatherKey').value = ws.apiKey || '';
   }
 
   /* ---------- save back into po_water_v1 (merge, never overwrite logs) ---------- */
@@ -554,6 +668,7 @@ body::after {
     w.profile.sex = sex;
     const act = parseFloat($('activity').value); if (act >= 0 && !isNaN(act)) w.profile.activityHrsPerWeek = act;
     saveJSON(WATER_KEY, w);
+    saveJSON(WEATHER_KEY, { city: $('weatherCity').value.trim(), apiKey: $('weatherKey').value.trim() });
     const s = $('settingsStatus'); s.textContent = 'Saved ✓';
     setTimeout(() => { s.textContent = ''; }, 1800);
   }
@@ -661,6 +776,185 @@ body::after {
     if (!t || !t.access) { window.location.href = 'health.html'; return; }
     $('whAction').textContent = 'Syncing…'; syncWhoop();
   });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const bg = $('briefingBg');
+  if (!bg) return;
+
+  const QUOTES = [
+    '„Beherrsche deine Gedanken, oder sie werden dich beherrschen.“ — Marc Aurel',
+    '„Der Weg ist das Ziel.“ — Konfuzius',
+    '„Handle, als ob es unmöglich wäre zu scheitern.“ — Winston Churchill',
+    '„Disziplin ist die Brücke zwischen Ziel und Leistung.“ — Jim Rohn',
+    '„Gewinne durch Handlungen, nie durch Argumente.“ — 48 Laws of Power',
+  ];
+  const WEATHER_ICONS = {
+    Clear: '☀️', Clouds: '☁️', Rain: '🌧️', Drizzle: '🌦️',
+    Thunderstorm: '⛈️', Snow: '❄️', Mist: '🌫️', Fog: '🌫️', Haze: '🌫️',
+  };
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  // Same 6 AM rollover convention used by main.html / health.html.
+  function activeDateObj() {
+    const now = new Date();
+    if (now.getHours() < 6) { const d = new Date(now); d.setDate(d.getDate() - 1); return d; }
+    return now;
+  }
+  function activeDateKey() {
+    const d = activeDateObj();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+  function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
+
+  function renderEmpty(el, text) {
+    el.innerHTML = '';
+    const d = document.createElement('div');
+    d.className = 'briefing-empty';
+    d.textContent = text;
+    el.appendChild(d);
+  }
+  function renderItems(el, lines, emptyText) {
+    el.innerHTML = '';
+    if (!lines.length) { renderEmpty(el, emptyText); return; }
+    lines.forEach((text) => {
+      const row = document.createElement('div');
+      row.className = 'briefing-item';
+      const bullet = document.createElement('span'); bullet.textContent = '•';
+      const label = document.createElement('span'); label.textContent = text;
+      row.appendChild(bullet); row.appendChild(label);
+      el.appendChild(row);
+    });
+  }
+
+  /* ---------- clock + date ---------- */
+  let clockTimer = null;
+  function renderClock() {
+    const now = new Date();
+    $('briefingClock').textContent = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+    $('briefingDate').textContent = now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+  }
+
+  /* ---------- weather ---------- */
+  async function renderWeather() {
+    const el = $('briefingWeather');
+    const w = loadJSON('weather_settings_v1', {});
+    if (!w.apiKey || !w.city) { el.textContent = '— Wetter nicht verfügbar —'; return; }
+    el.textContent = 'Lade Wetter…';
+    try {
+      const r = await fetch('https://api.openweathermap.org/data/2.5/weather?q=' + encodeURIComponent(w.city) + '&appid=' + encodeURIComponent(w.apiKey) + '&units=metric&lang=de');
+      if (!r.ok) throw new Error('weather ' + r.status);
+      const j = await r.json();
+      const temp = Math.round(j.main.temp);
+      const main = (j.weather && j.weather[0] && j.weather[0].main) || '';
+      const icon = WEATHER_ICONS[main] || '🌡️';
+      el.textContent = icon + ' ' + (j.name || w.city) + ' · ' + temp + '°C';
+    } catch (e) { el.textContent = '— Wetter nicht verfügbar —'; }
+  }
+
+  /* ---------- MITs / 80-20 (from main.html's goals:DATE list) ---------- */
+  function renderGoals() {
+    const goals = loadJSON('goals:' + activeDateKey(), []);
+    const open = Array.isArray(goals) ? goals.filter((g) => g && !g.done) : [];
+    const mits = open.filter((g) => !g.queued).map((g) => g.text);
+    const eighty = open.filter((g) => g.queued).map((g) => g.text);
+    renderItems($('briefingMits'), mits, 'Keine MITs gesetzt');
+    renderItems($('briefing8020'), eighty, 'Keine 80-20 Aufgaben');
+  }
+
+  /* ---------- Routinen (self-contained: routines:items / routines:done:DATE) ---------- */
+  function loadRoutineItems() { return loadJSON('routines:items', []); }
+  function saveRoutineItems(list) { localStorage.setItem('routines:items', JSON.stringify(list)); }
+  function loadRoutineDone() { return loadJSON('routines:done:' + activeDateKey(), {}); }
+  function saveRoutineDone(map) { localStorage.setItem('routines:done:' + activeDateKey(), JSON.stringify(map)); }
+
+  function renderRoutines() {
+    const items = loadRoutineItems();
+    const done = loadRoutineDone();
+    const pending = items.filter((it) => it && !done[it.id]);
+    const el = $('briefingRoutines');
+    el.innerHTML = '';
+    if (!pending.length) { renderEmpty(el, 'Alle Routinen erledigt ✓'); return; }
+    pending.forEach((it) => {
+      const row = document.createElement('label');
+      row.className = 'briefing-item';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.addEventListener('change', () => {
+        const d = loadRoutineDone();
+        if (cb.checked) d[it.id] = true; else delete d[it.id];
+        saveRoutineDone(d);
+        renderRoutines();
+      });
+      const label = document.createElement('span'); label.textContent = it.text;
+      row.appendChild(cb); row.appendChild(label);
+      el.appendChild(row);
+    });
+  }
+  function addRoutine() {
+    const input = $('routineInput');
+    const text = input.value.trim();
+    if (!text) return;
+    const items = loadRoutineItems();
+    items.push({ id: 'r' + Date.now(), text });
+    saveRoutineItems(items);
+    input.value = '';
+    renderRoutines();
+  }
+  $('routineAdd').addEventListener('click', addRoutine);
+  $('routineInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addRoutine(); });
+
+  /* ---------- Supplemente — morgens (from health.html's stack) ---------- */
+  function renderSupps() {
+    const items = loadJSON('stack:items', []);
+    const morning = Array.isArray(items) ? items.filter((it) => it && it.window === 'morning') : [];
+    const taken = loadJSON('stack:taken:' + activeDateKey(), {});
+    const el = $('briefingSupps');
+    el.innerHTML = '';
+    if (!morning.length) { renderEmpty(el, 'Keine Morgen-Supplemente'); return; }
+    morning.forEach((it) => {
+      const row = document.createElement('div');
+      row.className = 'briefing-item';
+      const mark = document.createElement('span'); mark.textContent = taken[it.id] ? '✓' : '•';
+      const label = document.createElement('span'); label.textContent = it.dose ? (it.name + ' (' + it.dose + ')') : it.name;
+      row.appendChild(mark); row.appendChild(label);
+      el.appendChild(row);
+    });
+  }
+
+  /* ---------- quote (deterministic per day) ---------- */
+  function renderQuote() {
+    const key = activeDateKey();
+    let hash = 0;
+    for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+    $('briefingQuote').textContent = QUOTES[hash % QUOTES.length];
+  }
+
+  /* ---------- open / close ---------- */
+  function open() {
+    renderClock(); renderWeather(); renderGoals(); renderRoutines(); renderSupps(); renderQuote();
+    bg.classList.add('show');
+    clearInterval(clockTimer);
+    clockTimer = setInterval(renderClock, 1000);
+  }
+  function close() {
+    bg.classList.remove('show');
+    clearInterval(clockTimer);
+  }
+  $('briefingClose').addEventListener('click', close);
+  bg.addEventListener('click', (e) => { if (e.target === bg) close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && bg.classList.contains('show')) close(); });
+  $('briefingStart').addEventListener('click', () => {
+    localStorage.setItem('briefing-shown-' + activeDateKey(), 'true');
+    close();
+  });
+
+  /* ---------- show once per day ---------- */
+  if (!localStorage.getItem('briefing-shown-' + activeDateKey())) open();
 })();
 </script>
 </body>
