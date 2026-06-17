@@ -697,6 +697,98 @@ body::after {
 }
 .td-analysis-btn:hover { background: rgba(255,255,255,0.08); }
 
+/* ===== Aufgaben Kanban ===== */
+.kb-tabs { display: inline-flex; border: 1px solid rgba(255,255,255,0.10); border-radius: 11px; overflow: hidden; margin-bottom: 14px; }
+.kb-tab {
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 10px 18px; cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.kb-tab.on { background: rgba(255,255,255,0.12); color: var(--text-primary); }
+.kb-tab:hover:not(.on) { color: var(--text-secondary); }
+
+.kb-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.kb-col {
+  display: flex; flex-direction: column;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px; padding: 14px;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+}
+.kb-col-head {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 12px; padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.kb-col-icon { font-size: 16px; }
+.kb-col-title { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.kb-col-mit        .kb-col-title { color: var(--danger); }
+.kb-col-8020       .kb-col-title { color: var(--warning); }
+.kb-col-delegieren .kb-col-title { color: var(--success); }
+.kb-col-eliminieren .kb-col-title { color: var(--text-tertiary); }
+
+.kb-cards { display: flex; flex-direction: column; gap: 8px; min-height: 8px; }
+
+.kb-card {
+  position: relative;
+  display: flex; align-items: flex-start; gap: 8px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 10px 30px 10px 10px;
+  animation: kb-slide-in 0.22s ease-out;
+}
+.kb-card.kb-card-exit { animation: kb-slide-out 0.22s ease-in forwards; }
+@keyframes kb-slide-in {
+  from { transform: translateY(14px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+@keyframes kb-slide-out {
+  from { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(30px); opacity: 0; }
+}
+.kb-card.kb-card-done { opacity: 0.4; }
+.kb-card.kb-card-done .kb-card-text { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
+.kb-card-body { flex: 1; min-width: 0; }
+.kb-card-text { font-size: 13px; color: var(--text-primary); }
+.kb-card-account {
+  font-size: 11px; color: var(--text-tertiary); margin: 4px -3px -2px;
+  cursor: text; outline: none; border-radius: 4px; padding: 1px 3px;
+}
+.kb-card-account:empty::before { content: attr(data-placeholder); opacity: 0.6; }
+.kb-card-account[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.25); }
+.kb-card-del {
+  position: absolute; top: 8px; right: 8px;
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-size: 13px; cursor: pointer; padding: 2px 5px; border-radius: 6px;
+  opacity: 0; transition: opacity 0.15s, color 0.15s;
+}
+.kb-card:hover .kb-card-del { opacity: 1; }
+.kb-card-del:hover { color: var(--danger); }
+
+.kb-add-row { margin-top: 4px; }
+.kb-add-input {
+  width: 100%; padding: 9px 11px;
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary);
+  font-family: inherit; font-size: 13px; outline: none;
+}
+.kb-add-input:focus { border-color: rgba(255,255,255,0.28); }
+.kb-add-btn {
+  width: 100%; margin-top: 8px; padding: 9px;
+  border: 1px dashed rgba(255,255,255,0.16); border-radius: 10px;
+  background: transparent; color: var(--text-tertiary);
+  font-family: inherit; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  cursor: pointer; transition: color 0.2s, border-color 0.2s;
+}
+.kb-add-btn:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.30); }
+
+@media (max-width: 720px) { .kb-board { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .kb-board { grid-template-columns: 1fr; } }
+
 /* ===== Tiny modal (Tagesanalyse) ===== */
 .td-modal-bg {
   position: fixed; inset: 0; z-index: 200; display: none;
@@ -851,6 +943,66 @@ body::after {
       </div>
       <div class="td-list" id="tdTasksList"></div>
       <div class="empty-state" id="tdTasksEmpty" style="display:none;">Alle Aufgaben erledigt ✓</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Aufgaben</div>
+
+    <div class="kb-tabs" id="kbTabs">
+      <button type="button" class="kb-tab on" data-tab="today">Heute</button>
+      <button type="button" class="kb-tab" data-tab="tomorrow">Morgen</button>
+      <button type="button" class="kb-tab" data-tab="all">Alle</button>
+    </div>
+
+    <div class="kb-board">
+      <div class="kb-col">
+        <div class="kb-col-head kb-col-mit">
+          <span class="kb-col-icon">🎯</span>
+          <span class="kb-col-title">MIT</span>
+        </div>
+        <div class="kb-cards" id="kbCards-mit"></div>
+        <div class="kb-add-row" id="kbAddRow-mit" style="display:none;">
+          <input type="text" class="kb-add-input" id="kbAddInput-mit" placeholder="Neue Aufgabe…" autocomplete="off">
+        </div>
+        <button type="button" class="kb-add-btn" data-cat="mit">+ Hinzufügen</button>
+      </div>
+
+      <div class="kb-col">
+        <div class="kb-col-head kb-col-8020">
+          <span class="kb-col-icon">⚡</span>
+          <span class="kb-col-title">80-20</span>
+        </div>
+        <div class="kb-cards" id="kbCards-8020"></div>
+        <div class="kb-add-row" id="kbAddRow-8020" style="display:none;">
+          <input type="text" class="kb-add-input" id="kbAddInput-8020" placeholder="Neue Aufgabe…" autocomplete="off">
+        </div>
+        <button type="button" class="kb-add-btn" data-cat="8020">+ Hinzufügen</button>
+      </div>
+
+      <div class="kb-col">
+        <div class="kb-col-head kb-col-delegieren">
+          <span class="kb-col-icon">🤝</span>
+          <span class="kb-col-title">Delegieren</span>
+        </div>
+        <div class="kb-cards" id="kbCards-delegieren"></div>
+        <div class="kb-add-row" id="kbAddRow-delegieren" style="display:none;">
+          <input type="text" class="kb-add-input" id="kbAddInput-delegieren" placeholder="Neue Aufgabe…" autocomplete="off">
+        </div>
+        <button type="button" class="kb-add-btn" data-cat="delegieren">+ Hinzufügen</button>
+      </div>
+
+      <div class="kb-col">
+        <div class="kb-col-head kb-col-eliminieren">
+          <span class="kb-col-icon">🗑️</span>
+          <span class="kb-col-title">Eliminieren</span>
+        </div>
+        <div class="kb-cards" id="kbCards-eliminieren"></div>
+        <div class="kb-add-row" id="kbAddRow-eliminieren" style="display:none;">
+          <input type="text" class="kb-add-input" id="kbAddInput-eliminieren" placeholder="Neue Aufgabe…" autocomplete="off">
+        </div>
+        <button type="button" class="kb-add-btn" data-cat="eliminieren">+ Hinzufügen</button>
+      </div>
     </div>
   </div>
 
@@ -1788,6 +1940,155 @@ document.addEventListener('DOMContentLoaded', function () {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('analysisModalBg').classList.remove('show'); });
 
   renderAnalysis();
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateToKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function activeDateKey() {
+    const now = new Date();
+    if (now.getHours() < 6) { const d = new Date(now); d.setDate(d.getDate() - 1); return dateToKey(d); }
+    return dateToKey(now);
+  }
+  function tomorrowDateKey() {
+    const now = new Date();
+    const d = new Date(now);
+    if (now.getHours() >= 6) d.setDate(d.getDate() + 1);
+    return dateToKey(d);
+  }
+
+  const CATEGORIES = ['mit', '8020', 'delegieren', 'eliminieren'];
+  let currentTab = 'today';
+
+  function bucketKey(tab) {
+    if (tab === 'today') return 'tasks-' + activeDateKey();
+    if (tab === 'tomorrow') return 'tasks-' + tomorrowDateKey();
+    return 'tasks-all';
+  }
+  function loadBucket(tab) {
+    try {
+      const list = JSON.parse(localStorage.getItem(bucketKey(tab)));
+      return Array.isArray(list) ? list : [];
+    } catch (e) { return []; }
+  }
+  function saveBucket(tab, list) { localStorage.setItem(bucketKey(tab), JSON.stringify(list)); }
+
+  function buildCard(task, tab) {
+    const card = document.createElement('div');
+    card.className = 'kb-card' + (task.done ? ' kb-card-done' : '');
+    card.dataset.id = task.id;
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'gm-check';
+    cb.checked = !!task.done;
+    cb.addEventListener('change', () => {
+      const list = loadBucket(tab);
+      const t = list.find((x) => x.id === task.id);
+      if (t) t.done = cb.checked;
+      saveBucket(tab, list);
+      card.classList.toggle('kb-card-done', cb.checked);
+    });
+    card.appendChild(cb);
+
+    const body = document.createElement('div');
+    body.className = 'kb-card-body';
+
+    const text = document.createElement('div');
+    text.className = 'kb-card-text';
+    text.textContent = task.text;
+    body.appendChild(text);
+
+    const account = document.createElement('div');
+    account.className = 'kb-card-account';
+    account.contentEditable = 'true';
+    account.dataset.placeholder = '+ Account';
+    account.textContent = task.account || '';
+    function commitAccount() {
+      const next = account.textContent.trim();
+      const list = loadBucket(tab);
+      const t = list.find((x) => x.id === task.id);
+      if (t) t.account = next;
+      saveBucket(tab, list);
+    }
+    account.addEventListener('blur', commitAccount);
+    account.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); account.blur(); }
+      else if (e.key === 'Escape') { e.preventDefault(); account.textContent = task.account || ''; account.blur(); }
+    });
+    body.appendChild(account);
+    card.appendChild(body);
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'kb-card-del';
+    del.setAttribute('aria-label', 'Löschen');
+    del.textContent = '✕';
+    del.addEventListener('click', () => {
+      card.classList.add('kb-card-exit');
+      card.addEventListener('animationend', () => {
+        const list = loadBucket(tab);
+        const idx = list.findIndex((x) => x.id === task.id);
+        if (idx > -1) { list.splice(idx, 1); saveBucket(tab, list); }
+        card.remove();
+      }, { once: true });
+    });
+    card.appendChild(del);
+
+    return card;
+  }
+
+  function renderColumn(cat) {
+    const list = loadBucket(currentTab).filter((t) => t && t.category === cat);
+    const el = $('kbCards-' + cat);
+    el.innerHTML = '';
+    list.forEach((task) => el.appendChild(buildCard(task, currentTab)));
+  }
+  function renderBoard() { CATEGORIES.forEach(renderColumn); }
+
+  function addTask(cat, text) {
+    const list = loadBucket(currentTab);
+    list.push({ id: 'k' + Date.now() + Math.random().toString(36).slice(2, 7), text, category: cat, account: '', done: false });
+    saveBucket(currentTab, list);
+    renderColumn(cat);
+  }
+
+  CATEGORIES.forEach((cat) => {
+    const addBtn = document.querySelector('.kb-add-btn[data-cat="' + cat + '"]');
+    const row = $('kbAddRow-' + cat);
+    const input = $('kbAddInput-' + cat);
+    function closeRow() { row.style.display = 'none'; addBtn.style.display = 'block'; }
+    addBtn.addEventListener('click', () => {
+      addBtn.style.display = 'none';
+      row.style.display = 'block';
+      input.value = '';
+      input.focus();
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const text = input.value.trim();
+        if (text) { addTask(cat, text); input.value = ''; }
+      } else if (e.key === 'Escape') {
+        closeRow();
+      }
+    });
+    input.addEventListener('blur', () => { if (!input.value.trim()) closeRow(); });
+  });
+
+  document.querySelectorAll('.kb-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      currentTab = tab.dataset.tab;
+      document.querySelectorAll('.kb-tab').forEach((t) => t.classList.toggle('on', t === tab));
+      renderBoard();
+    });
+  });
+
+  renderBoard();
 })();
 </script>
 </body>
