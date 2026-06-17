@@ -217,9 +217,91 @@ body::after {
 .whoop-stat .l { font-size: 9.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 5px; }
 .whoop-btn { width: 100%; margin-top: 14px; padding: 11px; border: 1px solid rgba(255,255,255,0.12); border-radius: 11px; background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: background 0.15s, color 0.15s; }
 .whoop-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+
+/* ===== Boot animation ===== */
+.boot-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #000000; color: #00ff41;
+  font-family: var(--font-mono);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 22px;
+  transition: opacity 0.5s ease;
+}
+.boot-overlay.fade-out { opacity: 0; pointer-events: none; }
+.boot-logo {
+  font-size: 60px; line-height: 1; color: #00ff41;
+  text-shadow: 0 0 20px rgba(0,255,65,0.8);
+}
+.boot-logo.glitch { animation: glitch 0.2s infinite; }
+@keyframes glitch {
+  0%,100% { transform: translate(0); filter: none; opacity: 1; }
+  20% { transform: translate(-3px,1px); filter: hue-rotate(90deg); opacity: 0.8; }
+  40% { transform: translate(3px,-1px); filter: brightness(2); opacity: 0.9; }
+  60% { transform: translate(-1px,3px); filter: hue-rotate(-90deg); opacity: 0.7; }
+  80% { transform: translate(2px,-2px); filter: brightness(0.5); opacity: 0.85; }
+}
+.boot-typing {
+  font-family: var(--font-mono); font-size: 14px; color: #00ff41;
+  min-height: 60px; white-space: pre-line; text-align: left;
+}
+.boot-progress {
+  width: 240px; height: 2px; background: rgba(0,255,65,0.15); overflow: hidden;
+}
+.boot-progress-bar {
+  width: 0%; height: 100%; background: #00ff41;
+  transition: width 2.5s linear;
+}
 </style>
 </head>
 <body>
+<div class="boot-overlay" id="bootOverlay">
+  <div class="boot-logo" id="bootLogo">⬡</div>
+  <div class="boot-typing" id="bootTyping"></div>
+  <div class="boot-progress"><div class="boot-progress-bar" id="bootProgressBar"></div></div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var overlay = document.getElementById('bootOverlay');
+  if (!overlay) return;
+  if (sessionStorage.getItem('booted')) { overlay.remove(); return; }
+  sessionStorage.setItem('booted', 'true');
+
+  var logo = document.getElementById('bootLogo');
+  var typingEl = document.getElementById('bootTyping');
+  var progressBar = document.getElementById('bootProgressBar');
+
+  logo.classList.add('glitch');
+  setTimeout(function () { logo.classList.remove('glitch'); }, 1500);
+
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () { progressBar.style.width = '100%'; });
+  });
+
+  var lines = ['INITIALIZING SYSTEM...', 'LOADING DANIEL OS v2...', 'ACCESS GRANTED'];
+  var lineIndex = 0, charIndex = 0;
+  function typeNext() {
+    if (lineIndex >= lines.length) return;
+    var line = lines[lineIndex];
+    if (charIndex < line.length) {
+      typingEl.textContent += line.charAt(charIndex);
+      charIndex++;
+      setTimeout(typeNext, 50);
+    } else {
+      lineIndex++;
+      charIndex = 0;
+      if (lineIndex < lines.length) typingEl.textContent += '\n';
+      setTimeout(typeNext, 50);
+    }
+  }
+  typeNext();
+
+  setTimeout(function () {
+    overlay.classList.add('fade-out');
+    setTimeout(function () { overlay.remove(); }, 500);
+  }, 3500);
+})();
+</script>
 <div class="page">
 
   <div class="hub-head">
