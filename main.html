@@ -595,11 +595,131 @@ body::after {
   .gm-card { padding: 16px; }
   .gm-progress-num { font-size: 36px; }
 }
+
+/* Hide the shared topbar's water tracker/+1 button on this page only. */
+.topbar-water-wrap { display: none !important; }
+
+/* ===== Back link ===== */
+.back-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 13px; font-weight: 600; color: var(--text-tertiary);
+  text-decoration: none; margin-bottom: 10px;
+}
+.back-link:hover { color: var(--text-primary); }
+
+/* ===== To Do Heute ===== */
+.td-card {
+  position: relative;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.td-card.td-missed {
+  border-color: rgba(255,107,107,0.5);
+  box-shadow: 0 0 0 1px rgba(255,107,107,0.25);
+}
+.td-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.td-card-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.td-missed-badge {
+  display: none;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+  padding: 4px 9px; border-radius: 999px;
+  background: rgba(255,107,107,0.18); color: var(--danger);
+  animation: td-pulse 1.4s ease-in-out infinite;
+}
+.td-card.td-missed .td-missed-badge { display: inline-block; }
+@keyframes td-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+.td-list { display: flex; flex-direction: column; gap: 6px; }
+.td-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+}
+.td-row.td-row-done { opacity: 0.45; }
+.td-row.td-row-done .td-row-text { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
+.td-row-text { flex: 1; font-size: 13px; color: var(--text-primary); }
+.td-tag {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 999px; flex-shrink: 0;
+  background: rgba(255,255,255,0.06); color: var(--text-tertiary);
+}
+.td-tag.td-tag-routine    { background: rgba(167,139,250,0.15); color: #A78BFA; }
+.td-tag.td-tag-supplement { background: rgba(167,243,208,0.15); color: #A7F3D0; }
+.td-tag.td-tag-account    { background: rgba(242,192,99,0.15);  color: #F2C063; }
+
+.td-add-routine-btn {
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-primary);
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  padding: 7px 12px; border-radius: 10px; cursor: pointer;
+  transition: background 0.15s;
+}
+.td-add-routine-btn:hover { background: rgba(255,255,255,0.08); }
+.td-add-routine-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.td-add-routine-row input {
+  flex: 1; min-width: 0; padding: 9px 12px;
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary);
+  font-family: inherit; font-size: 13px; outline: none;
+}
+.td-add-routine-row button {
+  padding: 9px 14px; border: 0; border-radius: 10px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+
+/* ===== KI Tagesanalyse ===== */
+.td-analysis-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px; padding: 18px 20px;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+}
+.td-analysis-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.td-analysis-summary { font-size: 13px; color: var(--text-secondary); margin: 10px 0 14px; line-height: 1.5; }
+.td-analysis-btn {
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-primary);
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  padding: 9px 14px; border-radius: 10px; cursor: pointer;
+  transition: background 0.15s;
+}
+.td-analysis-btn:hover { background: rgba(255,255,255,0.08); }
+
+/* ===== Tiny modal (Tagesanalyse) ===== */
+.td-modal-bg {
+  position: fixed; inset: 0; z-index: 200; display: none;
+  align-items: center; justify-content: center; padding: 20px;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.td-modal-bg.show { display: flex; }
+.td-modal {
+  width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto;
+  background: #0e0e10; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px; padding: 22px; box-shadow: 0 24px 70px rgba(0,0,0,0.6);
+}
+.td-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.td-modal-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.td-modal-close { border: 0; background: transparent; color: var(--text-tertiary); font-size: 24px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.td-modal-close:hover { color: var(--text-primary); }
+.td-modal-body { font-size: 13px; color: var(--text-secondary); line-height: 1.6; white-space: pre-line; }
 </style>
 </head>
 <body>
 <div class="page">
 
+  <a href="index.html" class="back-link" id="backLink">← Dashboard</a>
   <h1 class="dash-title">Rowans Dashboard</h1>
 
   <div class="ticker-row">
@@ -693,6 +813,66 @@ body::after {
     </div>
   </div>
 
+  <div class="section">
+    <div class="section-title">To Do Heute</div>
+
+    <div class="td-card" id="tdMorning" data-window="morning">
+      <div class="td-card-head">
+        <span class="td-card-title">🌅 Morgens</span>
+        <span class="td-missed-badge">VERPASST</span>
+      </div>
+      <div class="td-list" id="tdMorningList"></div>
+    </div>
+
+    <div class="td-card" id="tdLunch" data-window="lunch">
+      <div class="td-card-head">
+        <span class="td-card-title">🍽️ Mittags</span>
+        <span class="td-missed-badge">VERPASST</span>
+      </div>
+      <div class="td-list" id="tdLunchList"></div>
+    </div>
+
+    <div class="td-card" id="tdEvening" data-window="evening">
+      <div class="td-card-head">
+        <span class="td-card-title">🌙 Abends</span>
+        <span class="td-missed-badge">VERPASST</span>
+      </div>
+      <div class="td-list" id="tdEveningList"></div>
+    </div>
+
+    <div class="td-card" id="tdTasks">
+      <div class="td-card-head">
+        <span class="td-card-title">📋 Aufgaben</span>
+        <button type="button" class="td-add-routine-btn" id="tdAddRoutineBtn">+ Routine</button>
+      </div>
+      <div class="td-add-routine-row" id="tdAddRoutineRow" style="display:none;">
+        <input type="text" id="tdRoutineInput" placeholder="Neue Routine…" autocomplete="off">
+        <button type="button" id="tdRoutineConfirm">Hinzufügen</button>
+      </div>
+      <div class="td-list" id="tdTasksList"></div>
+      <div class="empty-state" id="tdTasksEmpty" style="display:none;">Alle Aufgaben erledigt ✓</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">KI Tagesanalyse</div>
+    <div class="td-analysis-card" id="analysisCard">
+      <span class="td-analysis-title">🧠 TAGESANALYSE</span>
+      <div class="td-analysis-summary" id="analysisSummary">Analysiere…</div>
+      <button type="button" class="td-analysis-btn" id="analysisFullBtn">Vollanalyse →</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="td-modal-bg" id="analysisModalBg">
+  <div class="td-modal" role="dialog" aria-label="Tagesanalyse">
+    <div class="td-modal-head">
+      <span class="td-modal-title">🧠 Tagesanalyse</span>
+      <button class="td-modal-close" id="analysisModalClose" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="td-modal-body" id="analysisFullText"></div>
+  </div>
 </div>
 
 <script>
@@ -1324,6 +1504,291 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
+</script>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+
+  /* ---------- Escape also goes back to the dashboard (unless a modal is open) ---------- */
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const modalBg = $('analysisModalBg');
+    if (modalBg && modalBg.classList.contains('show')) return;
+    window.location.href = 'index.html';
+  });
+
+  /* ---------- date helpers (mirrors the 6 AM rollover used above) ---------- */
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function activeDateObj() {
+    const now = new Date();
+    if (now.getHours() < 6) { const d = new Date(now); d.setDate(d.getDate() - 1); return d; }
+    return now;
+  }
+  function activeDateKey() {
+    const d = activeDateObj();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+  function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
+
+  /* ---------- data sources ---------- */
+  function loadGoals() {
+    const list = loadJSON('goals:' + activeDateKey(), []);
+    return Array.isArray(list) ? list : [];
+  }
+  function saveGoals(list) {
+    localStorage.setItem('goals:' + activeDateKey(), JSON.stringify(list));
+    window.dispatchEvent(new CustomEvent('goals-changed'));
+  }
+  function loadStackItems() {
+    const items = loadJSON('stack:items', []);
+    return Array.isArray(items) ? items : [];
+  }
+  function loadStackTaken() { return loadJSON('stack:taken:' + activeDateKey(), {}); }
+  function saveStackTaken(map) { localStorage.setItem('stack:taken:' + activeDateKey(), JSON.stringify(map)); }
+  function loadRoutineItems() {
+    const items = loadJSON('routines:items', []);
+    return Array.isArray(items) ? items : [];
+  }
+  function saveRoutineItems(list) { localStorage.setItem('routines:items', JSON.stringify(list)); }
+  function loadRoutineDone() { return loadJSON('routines:done:' + activeDateKey(), {}); }
+  function saveRoutineDone(map) { localStorage.setItem('routines:done:' + activeDateKey(), JSON.stringify(map)); }
+
+  const WINDOW_CUTOFF = { morning: 10, lunch: 14, evening: 23 };
+
+  function makeRow(text, tagLabel, tagClass, done, onToggle) {
+    const row = document.createElement('div');
+    row.className = 'td-row' + (done ? ' td-row-done' : '');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'gm-check';
+    cb.checked = done;
+    cb.addEventListener('change', () => onToggle(cb.checked));
+    const label = document.createElement('span');
+    label.className = 'td-row-text';
+    label.textContent = text;
+    row.appendChild(cb); row.appendChild(label);
+    if (tagLabel) {
+      const tag = document.createElement('span');
+      tag.className = 'td-tag ' + tagClass;
+      tag.textContent = tagLabel;
+      row.appendChild(tag);
+    }
+    return row;
+  }
+
+  /* ---------- Morgens / Mittags / Abends ---------- */
+  function renderWindowCard(windowKey, listElId, cardElId) {
+    const taken = loadStackTaken();
+    const rows = loadStackItems()
+      .filter((it) => it && it.window === windowKey)
+      .map((it) => ({
+        text: it.dose ? (it.name + ' (' + it.dose + ')') : it.name,
+        done: !!taken[it.id],
+        toggle: (checked) => {
+          const t = loadStackTaken();
+          if (checked) t[it.id] = Date.now(); else delete t[it.id];
+          saveStackTaken(t);
+          renderAllTodo();
+        },
+      }));
+
+    if (windowKey === 'morning') {
+      const rDone = loadRoutineDone();
+      loadRoutineItems().forEach((it) => {
+        rows.push({
+          text: it.text,
+          done: !!rDone[it.id],
+          toggle: (checked) => {
+            const d = loadRoutineDone();
+            if (checked) d[it.id] = true; else delete d[it.id];
+            saveRoutineDone(d);
+            renderAllTodo();
+          },
+        });
+      });
+    }
+
+    const el = $(listElId);
+    el.innerHTML = '';
+    if (!rows.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = 'Nichts geplant';
+      el.appendChild(empty);
+    } else {
+      rows.forEach((r) => el.appendChild(makeRow(r.text, null, '', r.done, r.toggle)));
+    }
+
+    const card = $(cardElId);
+    const cutoff = WINDOW_CUTOFF[windowKey];
+    const hasOpen = rows.some((r) => !r.done);
+    const missed = cutoff != null && new Date().getHours() >= cutoff && hasOpen;
+    card.classList.toggle('td-missed', missed);
+  }
+
+  /* ---------- Aufgaben (combined, tagged view) ---------- */
+  function renderTasks() {
+    const el = $('tdTasksList');
+    const emptyEl = $('tdTasksEmpty');
+    el.innerHTML = '';
+    const rows = [];
+
+    loadGoals().forEach((g, idx) => {
+      if (g.done) return;
+      rows.push(makeRow(g.text, 'Daniel', 'td-tag-account', false, (checked) => {
+        const list = loadGoals();
+        if (list[idx]) { list[idx].done = checked; if (checked) list[idx].doneAt = Date.now(); else delete list[idx].doneAt; }
+        saveGoals(list);
+        renderAllTodo();
+      }));
+    });
+
+    const rDone = loadRoutineDone();
+    loadRoutineItems().forEach((it) => {
+      if (rDone[it.id]) return;
+      rows.push(makeRow(it.text, 'Routine', 'td-tag-routine', false, (checked) => {
+        const d = loadRoutineDone();
+        if (checked) d[it.id] = true; else delete d[it.id];
+        saveRoutineDone(d);
+        renderAllTodo();
+      }));
+    });
+
+    const taken = loadStackTaken();
+    loadStackItems().forEach((it) => {
+      if (taken[it.id]) return;
+      const label = it.dose ? (it.name + ' (' + it.dose + ')') : it.name;
+      rows.push(makeRow(label, 'Supplement', 'td-tag-supplement', false, (checked) => {
+        const t = loadStackTaken();
+        if (checked) t[it.id] = Date.now(); else delete t[it.id];
+        saveStackTaken(t);
+        renderAllTodo();
+      }));
+    });
+
+    if (!rows.length) { emptyEl.style.display = 'block'; }
+    else { emptyEl.style.display = 'none'; rows.forEach((r) => el.appendChild(r)); }
+  }
+
+  function renderAllTodo() {
+    renderWindowCard('morning', 'tdMorningList', 'tdMorning');
+    renderWindowCard('lunch',   'tdLunchList',   'tdLunch');
+    renderWindowCard('evening', 'tdEveningList', 'tdEvening');
+    renderTasks();
+  }
+
+  /* ---------- + Routine ---------- */
+  $('tdAddRoutineBtn').addEventListener('click', () => {
+    const row = $('tdAddRoutineRow');
+    const showing = row.style.display !== 'none';
+    row.style.display = showing ? 'none' : 'flex';
+    if (!showing) $('tdRoutineInput').focus();
+  });
+  function addRoutine() {
+    const input = $('tdRoutineInput');
+    const text = input.value.trim();
+    if (!text) return;
+    const items = loadRoutineItems();
+    items.push({ id: 'r' + Date.now(), text });
+    saveRoutineItems(items);
+    input.value = '';
+    $('tdAddRoutineRow').style.display = 'none';
+    renderAllTodo();
+  }
+  $('tdRoutineConfirm').addEventListener('click', addRoutine);
+  $('tdRoutineInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addRoutine(); });
+
+  renderAllTodo();
+  setInterval(renderAllTodo, 60 * 1000);
+  window.addEventListener('storage', renderAllTodo);
+  window.addEventListener('goals-changed', renderAllTodo);
+
+  /* ---------- KI Tagesanalyse (Claude key shared with the Nova page) ---------- */
+  const ANALYSIS_KEY_LS = 'nova_lite_api_key';
+  function analysisCacheKey() { return 'tagesanalyse:' + activeDateKey(); }
+
+  function buildAnalysisContext() {
+    const goals = loadGoals();
+    const goalsDone = goals.filter((g) => g.done).length;
+    const stack = loadStackItems();
+    const taken = loadStackTaken();
+    const routines = loadRoutineItems();
+    const rDone = loadRoutineDone();
+    const routinesDone = routines.filter((it) => rDone[it.id]).length;
+    const streak = loadJSON('goal_streak_v1', { count: 0 });
+    return 'Datum: ' + activeDateKey() + '\n' +
+      'Ziele heute: ' + goalsDone + '/' + goals.length + ' erledigt\n' +
+      'Supplemente: ' + stack.filter((it) => taken[it.id]).length + '/' + stack.length + ' genommen\n' +
+      'Routinen: ' + routinesDone + '/' + routines.length + ' erledigt\n' +
+      'Aktueller Streak: ' + (streak.count || 0) + ' Tage';
+  }
+
+  async function callClaudeAnalysis(apiKey, context) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 400,
+        messages: [{
+          role: 'user',
+          content:
+            'Du bist ein knapper, motivierender Tages-Coach. Hier sind die heutigen Kennzahlen:\n\n' + context +
+            '\n\nAntworte auf Deutsch in genau zwei Teilen, getrennt durch eine Zeile mit drei Bindestrichen (---):\n' +
+            '1) Ein einziger knackiger Satz als Zusammenfassung.\n' +
+            '2) Eine kurze Analyse in 3-5 Sätzen mit einem konkreten Hinweis, worauf der Nutzer sich als Nächstes fokussieren sollte.\n' +
+            'Keine Einleitung, keine Anführungszeichen, kein Markdown.'
+        }]
+      })
+    });
+    const data = await res.json();
+    const content = (data && data.content && data.content[0] && data.content[0].text) || '';
+    const parts = content.split('---');
+    return { summary: (parts[0] || '').trim(), full: (parts[1] || parts[0] || '').trim() };
+  }
+
+  async function renderAnalysis() {
+    const summaryEl = $('analysisSummary');
+    let apiKey = '';
+    try { apiKey = (localStorage.getItem(ANALYSIS_KEY_LS) || '').trim(); } catch (e) {}
+    if (!apiKey) {
+      summaryEl.textContent = 'Kein API-Key gesetzt — auf der Nova-Seite hinzufügen.';
+      $('analysisFullText').textContent = 'Kein API-Key gesetzt — auf der Nova-Seite hinzufügen.';
+      return;
+    }
+    const cacheKey = analysisCacheKey();
+    const cached = loadJSON(cacheKey, null);
+    if (cached && cached.summary) {
+      summaryEl.textContent = cached.summary;
+      $('analysisFullText').textContent = cached.full;
+      return;
+    }
+    summaryEl.textContent = 'Analysiere…';
+    try {
+      const result = await callClaudeAnalysis(apiKey, buildAnalysisContext());
+      localStorage.setItem(cacheKey, JSON.stringify(result));
+      summaryEl.textContent = result.summary || 'Analyse generiert.';
+      $('analysisFullText').textContent = result.full || result.summary || '';
+    } catch (e) {
+      summaryEl.textContent = 'Analyse momentan nicht verfügbar.';
+      $('analysisFullText').textContent = 'Analyse momentan nicht verfügbar.';
+    }
+  }
+
+  $('analysisFullBtn').addEventListener('click', () => $('analysisModalBg').classList.add('show'));
+  $('analysisModalClose').addEventListener('click', () => $('analysisModalBg').classList.remove('show'));
+  $('analysisModalBg').addEventListener('click', (e) => { if (e.target === $('analysisModalBg')) $('analysisModalBg').classList.remove('show'); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('analysisModalBg').classList.remove('show'); });
+
+  renderAnalysis();
+})();
 </script>
 </body>
 </html>
