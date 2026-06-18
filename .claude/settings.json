@@ -12,7 +12,12 @@
       "Bash(grep -n \"anyModalOpen\\(\\);\\\\s*$\" health.html)",
       "Bash(grep -n \"goBackToDashboard\\(\\);\\\\s*$\" health.html)",
       "Bash(node --check /tmp/_chk.js)",
-      "Bash(rm -f /tmp/_chk.js)"
+      "Bash(rm -f /tmp/_chk.js)",
+      "Bash(awk 'NR==1610{print \"1610:\"$0} NR==1611{print \"1611:\"$0} NR==1897{print \"1897:\"$0} NR==1898{print \"1898:\"$0} NR==1918{print \"1918:\"$0} NR==1919{print \"1919:\"$0} NR==3409{print \"3409:\"$0} NR==3410{print \"3410:\"$0} NR==3411{print \"3411:\"$0}' finance.html)"
+    ],
+    "additionalDirectories": [
+      "/tmp",
+      "/private/tmp"
     ]
   }
 }

@@ -698,16 +698,26 @@ body::after {
   -webkit-backdrop-filter: blur(24px) saturate(1.2);
 }
 .td-analysis-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-.td-analysis-summary { font-size: 13px; color: var(--text-secondary); margin: 10px 0 14px; line-height: 1.5; }
-.td-analysis-btn {
+.td-analysis-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+.td-analysis-body {
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+  margin: 14px 0; white-space: pre-line;
+}
+.td-analysis-body strong { color: var(--text-primary); font-weight: 700; }
+.td-analysis-body h3 { font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 10px 0 4px; }
+.td-analysis-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.td-analysis-time { font-size: 10.5px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.td-analysis-refresh-btn {
+  margin-left: auto;
   border: 1px solid rgba(255,255,255,0.10);
   background: rgba(255,255,255,0.04);
   color: var(--text-primary);
   font-family: inherit; font-size: 12px; font-weight: 700;
-  padding: 9px 14px; border-radius: 10px; cursor: pointer;
+  padding: 8px 12px; border-radius: 10px; cursor: pointer;
   transition: background 0.15s;
 }
-.td-analysis-btn:hover { background: rgba(255,255,255,0.08); }
+.td-analysis-refresh-btn:hover { background: rgba(255,255,255,0.08); }
+.td-analysis-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ===== Aufgaben Kanban ===== */
 .kb-tabs { display: inline-flex; border: 1px solid rgba(255,255,255,0.10); border-radius: 11px; overflow: hidden; margin-bottom: 14px; }
@@ -1132,8 +1142,12 @@ body::after {
     <div class="section-title">KI Tagesanalyse</div>
     <div class="td-analysis-card" id="analysisCard">
       <span class="td-analysis-title">🧠 TAGESANALYSE</span>
-      <div class="td-analysis-summary" id="analysisSummary">Analysiere…</div>
-      <button type="button" class="td-analysis-btn" id="analysisFullBtn">Vollanalyse →</button>
+      <div class="td-analysis-sub">KI analysiert täglich alle deine Daten</div>
+      <div class="td-analysis-body" id="analysisBody">Analysiere…</div>
+      <div class="td-analysis-footer">
+        <span class="td-analysis-time" id="analysisTime"></span>
+        <button type="button" class="td-analysis-refresh-btn" id="analysisRefreshBtn">🔄 Neu</button>
+      </div>
     </div>
   </div>
 
@@ -1165,16 +1179,6 @@ body::after {
     </div>
   </div>
 
-</div>
-
-<div class="td-modal-bg" id="analysisModalBg">
-  <div class="td-modal" role="dialog" aria-label="Tagesanalyse">
-    <div class="td-modal-head">
-      <span class="td-modal-title">🧠 Tagesanalyse</span>
-      <button class="td-modal-close" id="analysisModalClose" type="button" aria-label="Close">×</button>
-    </div>
-    <div class="td-modal-body" id="analysisFullText"></div>
-  </div>
 </div>
 
 <div class="td-modal-bg" id="weeklyReviewBg">
@@ -1906,7 +1910,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const $ = (id) => document.getElementById(id);
 
   /* ---------- smooth back navigation: fadeOut -> navigate ---------- */
-  const BACK_BLOCKING_MODALS = ['analysisModalBg', 'weeklyReviewBg', 'journalBg'];
+  const BACK_BLOCKING_MODALS = ['weeklyReviewBg', 'journalBg'];
   function anyModalOpen() {
     return BACK_BLOCKING_MODALS.some((id) => {
       const el = $(id);
@@ -2127,25 +2131,65 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ---------- KI Tagesanalyse (Claude key shared with the Nova page) ---------- */
   const ANALYSIS_KEY_LS = 'nova_lite_api_key';
-  function analysisCacheKey() { return 'tagesanalyse:' + activeDateKey(); }
+  function analysisCacheKey() { return 'ki-analyse-' + activeDateKey(); }
+  function analysisDateKeyFor(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
 
   function buildAnalysisContext() {
-    const goals = loadGoals();
-    const goalsDone = goals.filter((g) => g.done).length;
-    const stack = loadStackItems();
-    const taken = loadStackTaken();
-    const routines = loadRoutineItems();
+    const openGoals = loadGoals().filter((g) => g && !g.done).map((g) => g.text);
+
+    const routineItems = loadRoutineItems();
     const rDone = loadRoutineDone();
-    const routinesDone = routines.filter((it) => rDone[it.id]).length;
+    const routinesPending = routineItems.filter((it) => it && !rDone[it.id]);
+
     const streak = loadJSON('goal_streak_v1', { count: 0 });
-    return 'Datum: ' + activeDateKey() + '\n' +
-      'Ziele heute: ' + goalsDone + '/' + goals.length + ' erledigt\n' +
-      'Supplemente: ' + stack.filter((it) => taken[it.id]).length + '/' + stack.length + ' genommen\n' +
-      'Routinen: ' + routinesDone + '/' + routines.length + ' erledigt\n' +
-      'Aktueller Streak: ' + (streak.count || 0) + ' Tage';
+
+    // Mood letzte Woche: average over the last 7 days' Tagesabschluss-Journal entries.
+    let moodSum = 0, moodCount = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = activeDateObj();
+      d.setDate(d.getDate() - i);
+      const entry = loadJSON('journal:' + analysisDateKeyFor(d), null);
+      if (entry && typeof entry.mood === 'number') { moodSum += entry.mood; moodCount++; }
+    }
+    const moodText = moodCount
+      ? (moodSum / moodCount).toFixed(1) + '/10 (Ø über ' + moodCount + ' Tag' + (moodCount === 1 ? '' : 'e') + ')'
+      : 'keine Journal-Daten';
+
+    // Wochenziele: alle Goals von Montag bis heute dieser Woche (dedupliziert).
+    const today = activeDateObj();
+    const dow = today.getDay(); // 0=Sun..6=Sat
+    const mondayOffset = dow === 0 ? -6 : 1 - dow;
+    const weekGoalTexts = [];
+    for (let i = mondayOffset; i <= 0; i++) {
+      const d = activeDateObj();
+      d.setDate(d.getDate() + i);
+      const dayGoals = loadJSON('goals:' + analysisDateKeyFor(d), []);
+      if (Array.isArray(dayGoals)) {
+        dayGoals.forEach((g) => {
+          if (g && g.text && weekGoalTexts.indexOf(g.text) === -1) weekGoalTexts.push(g.text);
+        });
+      }
+    }
+
+    return {
+      tasks: openGoals.length ? openGoals.join(', ') : 'keine offenen Aufgaben',
+      routines: routineItems.length ? (routinesPending.length + '/' + routineItems.length + ' offen') : 'keine Routinen gesetzt',
+      streak: (streak.count || 0) + ' Tage',
+      mood: moodText,
+      weekplan: weekGoalTexts.length ? weekGoalTexts.join(', ') : 'keine Wochenziele gesetzt',
+    };
   }
 
-  async function callClaudeAnalysis(apiKey, context) {
+  async function callClaudeAnalysis(apiKey, ctx) {
+    const prompt =
+      'Analysiere Daniels heutigen Tag:\n' +
+      'Aufgaben offen: ' + ctx.tasks + '\n' +
+      'Routinen: ' + ctx.routines + '\n' +
+      'Streak: ' + ctx.streak + '\n' +
+      'Mood letzte Woche: ' + ctx.mood + '\n' +
+      'Wochenziele: ' + ctx.weekplan + '\n\n' +
+      'Direkte ehrliche Analyse in 5 Sätzen.\n' +
+      'Stärken, Schwächen, eine konkrete Empfehlung.';
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -2156,58 +2200,75 @@ document.addEventListener('DOMContentLoaded', function () {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
-        max_tokens: 400,
-        messages: [{
-          role: 'user',
-          content:
-            'Du bist ein knapper, motivierender Tages-Coach. Hier sind die heutigen Kennzahlen:\n\n' + context +
-            '\n\nAntworte auf Deutsch in genau zwei Teilen, getrennt durch eine Zeile mit drei Bindestrichen (---):\n' +
-            '1) Ein einziger knackiger Satz als Zusammenfassung.\n' +
-            '2) Eine kurze Analyse in 3-5 Sätzen mit einem konkreten Hinweis, worauf der Nutzer sich als Nächstes fokussieren sollte.\n' +
-            'Keine Einleitung, keine Anführungszeichen, kein Markdown.'
-        }]
+        max_tokens: 500,
+        messages: [{ role: 'user', content: prompt }],
       })
     });
     const data = await res.json();
-    const content = (data && data.content && data.content[0] && data.content[0].text) || '';
-    const parts = content.split('---');
-    return { summary: (parts[0] || '').trim(), full: (parts[1] || parts[0] || '').trim() };
+    return ((data && data.content && data.content[0] && data.content[0].text) || '').trim();
   }
 
-  async function renderAnalysis() {
-    const summaryEl = $('analysisSummary');
+  function renderAnalysisMarkdown(text) {
+    const escaped = String(text).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    const withHeadings = escaped.replace(/^##\s?(.+)$/gm, '<h3>$1</h3>');
+    return withHeadings.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  }
+
+  function typewriterThenRender(el, rawText) {
+    el.innerHTML = '';
+    let i = 0;
+    function step() {
+      if (i >= rawText.length) { el.innerHTML = renderAnalysisMarkdown(rawText); return; }
+      el.textContent += rawText.charAt(i);
+      i++;
+      setTimeout(step, 15);
+    }
+    step();
+  }
+
+  function formatAnalysisTime(ts) {
+    const d = new Date(ts);
+    return 'Analysiert um ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ' Uhr';
+  }
+
+  async function generateAndShowAnalysis(force) {
+    const bodyEl = $('analysisBody');
+    const timeEl = $('analysisTime');
+    const btn = $('analysisRefreshBtn');
     let apiKey = '';
     try { apiKey = (localStorage.getItem(ANALYSIS_KEY_LS) || '').trim(); } catch (e) {}
     if (!apiKey) {
-      summaryEl.textContent = 'Kein API-Key gesetzt — auf der Nova-Seite hinzufügen.';
-      $('analysisFullText').textContent = 'Kein API-Key gesetzt — auf der Nova-Seite hinzufügen.';
+      bodyEl.textContent = 'Kein API-Key gesetzt — auf der Nova-Seite hinzufügen.';
+      timeEl.textContent = '';
       return;
     }
     const cacheKey = analysisCacheKey();
-    const cached = loadJSON(cacheKey, null);
-    if (cached && cached.summary) {
-      summaryEl.textContent = cached.summary;
-      $('analysisFullText').textContent = cached.full;
-      return;
+    if (!force) {
+      const cached = loadJSON(cacheKey, null);
+      if (cached && cached.text) {
+        bodyEl.innerHTML = renderAnalysisMarkdown(cached.text);
+        timeEl.textContent = formatAnalysisTime(cached.generatedAt);
+        return;
+      }
     }
-    summaryEl.textContent = 'Analysiere…';
+    bodyEl.textContent = 'Analysiere…';
+    timeEl.textContent = '';
+    btn.disabled = true;
     try {
-      const result = await callClaudeAnalysis(apiKey, buildAnalysisContext());
-      localStorage.setItem(cacheKey, JSON.stringify(result));
-      summaryEl.textContent = result.summary || 'Analyse generiert.';
-      $('analysisFullText').textContent = result.full || result.summary || '';
+      const text = await callClaudeAnalysis(apiKey, buildAnalysisContext());
+      const generatedAt = Date.now();
+      localStorage.setItem(cacheKey, JSON.stringify({ text, generatedAt }));
+      typewriterThenRender(bodyEl, text);
+      timeEl.textContent = formatAnalysisTime(generatedAt);
     } catch (e) {
-      summaryEl.textContent = 'Analyse momentan nicht verfügbar.';
-      $('analysisFullText').textContent = 'Analyse momentan nicht verfügbar.';
+      bodyEl.textContent = 'Analyse momentan nicht verfügbar.';
+    } finally {
+      btn.disabled = false;
     }
   }
 
-  $('analysisFullBtn').addEventListener('click', () => $('analysisModalBg').classList.add('show'));
-  $('analysisModalClose').addEventListener('click', () => $('analysisModalBg').classList.remove('show'));
-  $('analysisModalBg').addEventListener('click', (e) => { if (e.target === $('analysisModalBg')) $('analysisModalBg').classList.remove('show'); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('analysisModalBg').classList.remove('show'); });
-
-  renderAnalysis();
+  $('analysisRefreshBtn').addEventListener('click', () => generateAndShowAnalysis(true));
+  generateAndShowAnalysis(false);
 
   window.addEventListener('pagehide', () => { clearInterval(todoHeuteTimer); });
 })();
