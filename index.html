@@ -115,6 +115,10 @@ body::after {
   color: var(--text-primary); margin: 0 0 4px;
 }
 .tile.big .tile-title { font-size: 28px; }
+.tt-meta { font-size: 11px; font-weight: 600; color: var(--text-tertiary); margin: 2px 0 6px; }
+.tt-bar-track { height: 4px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden; margin-bottom: 6px; }
+.tt-bar-fill { height: 100%; width: 0%; background: var(--accent); border-radius: 999px; transition: width 0.4s; }
+.tt-next { font-size: 11px; color: var(--text-secondary); line-height: 1.3; }
 .tile-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .tile-sub {
   font-size: 13px; color: var(--text-tertiary);
@@ -436,8 +440,8 @@ body::after {
       </div>
     </a>
 
-    <!-- Wide tile -->
-    <a class="tile wide" href="caffeine.html" style="--accent:#C9A36B">
+    <!-- Small tile -->
+    <a class="tile" href="caffeine.html" style="--accent:#C9A36B">
       <div class="tile-top">
         <span class="tile-num">·05</span>
         <span class="tile-emoji">☕</span>
@@ -450,10 +454,27 @@ body::after {
       </div>
     </a>
 
+    <!-- Small tile -->
+    <a class="tile tile-traumplan" href="traumplan.html" style="--accent:#FFE066">
+      <div class="tile-top">
+        <span class="tile-num">·06</span>
+        <span class="tile-emoji">⭐</span>
+      </div>
+      <h2 class="tile-title">Traumplan</h2>
+      <div class="tt-meta" id="ttActiveGoal">—</div>
+      <div class="tt-bar-track"><div class="tt-bar-fill" id="ttBarFill"></div></div>
+      <div class="tt-next" id="ttNextAction">Noch kein Plan erstellt</div>
+      <div class="tile-spacer"></div>
+      <div class="tile-foot">
+        <span class="tile-sub">Ziele & Aktionsplan</span>
+        <span class="tile-arrow">→</span>
+      </div>
+    </a>
+
     <!-- Wide tile -->
     <a class="tile wide" href="nova-lite.html" style="--accent:#A78BFA">
       <div class="tile-top">
-        <span class="tile-num">·06</span>
+        <span class="tile-num">·07</span>
         <span class="tile-emoji">🧠</span>
       </div>
       <div class="tile-spacer"></div>
@@ -955,6 +976,44 @@ body::after {
 
   /* ---------- show once per day ---------- */
   if (!localStorage.getItem('briefing-shown-' + activeDateKey())) open();
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
+
+  function computeProgress(plan) {
+    if (!plan) return 0;
+    if (Array.isArray(plan.actionPlan) && plan.actionPlan.length) {
+      const done = plan.actionPlan.filter((a) => a && a.done).length;
+      return Math.round((done / plan.actionPlan.length) * 100);
+    }
+    const fields = [...(plan.haben || []), ...(plan.sein || []), ...((plan.tun || []).map((t) => t && t.text))];
+    const filled = fields.filter((f) => f && String(f).trim()).length;
+    return fields.length ? Math.round((filled / fields.length) * 100) : 0;
+  }
+  function nextAction(plan) {
+    if (plan && Array.isArray(plan.actionPlan) && plan.actionPlan.length) {
+      const open = plan.actionPlan.find((a) => a && !a.done && a.text);
+      return open ? open.text : 'Alle Aktionen erledigt ✓';
+    }
+    return 'Noch kein Plan erstellt';
+  }
+
+  function renderTraumplanWidget() {
+    const goalEl = $('ttActiveGoal');
+    if (!goalEl) return;
+    const active = localStorage.getItem('traumplan-active') || '3';
+    const plan = loadJSON('traumplan-' + active, null);
+    goalEl.textContent = active + ' Monate';
+    $('ttBarFill').style.width = computeProgress(plan) + '%';
+    $('ttNextAction').textContent = nextAction(plan);
+  }
+  renderTraumplanWidget();
+  window.addEventListener('storage', renderTraumplanWidget);
 })();
 </script>
 </body>

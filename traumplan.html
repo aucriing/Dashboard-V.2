@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Traumplan</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="topbar.js" defer></script>
+
+<style>
+/* ===== Shared design tokens (same as the rest of the dashboard) ===== */
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --accent: #FFE066;
+  --danger: #FF6B6B;
+  --success: #6BE3A4;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #050506;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body {
+  min-height: 100vh; position: relative; overflow-x: hidden;
+  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(224,118,88,0.16), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(180,180,200,0.06), transparent 50%);
+  filter: blur(40px); pointer-events: none; z-index: -2;
+  animation: drift 36s ease-in-out infinite alternate;
+}
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px; pointer-events: none; z-index: -1;
+}
+@keyframes drift { 0%{transform:translate3d(0,0,0)} 100%{transform:translate3d(-22px,14px,0)} }
+
+.page { max-width: 720px; margin: 0 auto; }
+.dash-title {
+  margin: 0 0 18px; font-size: 28px; font-weight: 700; letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+@media (max-width: 480px) { .dash-title { font-size: 22px; } }
+
+/* Hide the shared topbar's water tracker/+1 button on this page only. */
+.topbar-water-wrap { display: none !important; }
+
+/* ===== Back link ===== */
+.back-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 13px; font-weight: 600; color: var(--text-tertiary);
+  text-decoration: none; margin-bottom: 10px;
+}
+.back-link:hover { color: var(--text-primary); }
+
+/* ===== Tabs ===== */
+.tp-tabs {
+  display: inline-flex; border: 1px solid rgba(255,255,255,0.10); border-radius: 11px;
+  overflow: hidden; margin-bottom: 20px;
+}
+.tp-tab {
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: 0.04em;
+  padding: 11px 20px; cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.tp-tab.on { background: rgba(255,255,255,0.12); color: var(--text-primary); }
+.tp-tab:hover:not(.on) { color: var(--text-secondary); }
+
+/* ===== Cards ===== */
+.tp-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+}
+.tp-step-title {
+  font-size: 15px; font-weight: 700; color: var(--text-primary);
+  margin-bottom: 14px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+}
+.tp-step-sub { font-size: 12px; font-weight: 500; color: var(--text-tertiary); }
+
+.tp-field { margin-bottom: 10px; }
+.tp-field:last-child { margin-bottom: 0; }
+.tp-field label {
+  display: block; font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px;
+}
+.tp-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.tp-field-row .tp-field { margin-bottom: 0; }
+.tp-input {
+  width: 100%; font-size: 14px; padding: 10px 13px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.28); color: var(--text-primary);
+  font-family: inherit; outline: none; transition: border-color 0.18s, background 0.18s;
+}
+.tp-input::placeholder { color: var(--text-tertiary); }
+.tp-input:focus { border-color: rgba(255,255,255,0.30); background: rgba(0,0,0,0.36); }
+
+.tp-tun-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.tp-tun-row:last-child { margin-bottom: 0; }
+.tp-tun-row .tp-input:first-child { flex: 1; }
+.tp-cost-input { width: 100px; flex-shrink: 0; }
+
+.tp-cost-summary { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.07); }
+.tp-cost-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; font-size: 13px; }
+.tp-cost-row span:first-child { color: var(--text-tertiary); }
+.tp-cost-row span:last-child { color: var(--text-primary); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.tp-traffic {
+  display: flex; align-items: center; gap: 8px; margin-top: 12px;
+  padding: 10px 14px; border-radius: 10px; background: rgba(255,255,255,0.03);
+  font-size: 12.5px; color: var(--text-secondary);
+}
+.tp-traffic-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-tertiary); flex-shrink: 0; }
+.tp-traffic-dot.tp-green { background: var(--success); box-shadow: 0 0 8px rgba(107,227,164,0.6); }
+.tp-traffic-dot.tp-amber { background: var(--accent); box-shadow: 0 0 8px rgba(242,192,99,0.6); }
+.tp-traffic-dot.tp-red   { background: var(--danger); box-shadow: 0 0 8px rgba(255,107,107,0.6); }
+
+.tp-generate-btn {
+  width: 100%; padding: 13px; border: 0; border-radius: 12px;
+  background: linear-gradient(180deg,#FFFFFF,#E8E5DD); color: #0A0A0B;
+  font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 22px rgba(0,0,0,0.25);
+  transition: filter 0.15s, transform 0.1s;
+}
+.tp-generate-btn:hover { filter: brightness(1.05); }
+.tp-generate-btn:active { transform: translateY(1px); }
+.tp-generate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.tp-status { text-align: center; font-size: 12px; color: var(--text-tertiary); min-height: 16px; margin-top: 8px; }
+.tp-status.tp-status-error { color: var(--danger); }
+
+.tp-action-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.tp-action-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; border-radius: 10px;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06);
+  font-size: 13px; color: var(--text-primary); cursor: pointer;
+}
+.tp-action-row input[type="checkbox"] { margin-top: 1px; accent-color: var(--accent); flex-shrink: 0; }
+.tp-action-row.tp-action-done { opacity: 0.45; }
+.tp-action-row.tp-action-done span { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
+.tp-empty { font-size: 12px; font-style: italic; color: var(--text-tertiary); padding: 4px 0; }
+
+@media (max-width: 480px) {
+  body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
+  .tp-field-row { grid-template-columns: 1fr; }
+  .tp-tun-row { flex-wrap: wrap; }
+  .tp-cost-input { width: 100%; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <a href="index.html" class="back-link">← Dashboard</a>
+  <h1 class="dash-title">⭐ Traumplan</h1>
+
+  <div class="tp-tabs" id="tpTabs">
+    <button type="button" class="tp-tab on" data-months="3">3 Monate</button>
+    <button type="button" class="tp-tab" data-months="6">6 Monate</button>
+    <button type="button" class="tp-tab" data-months="12">12 Monate</button>
+  </div>
+
+  <div class="tp-card">
+    <div class="tp-step-title">Schritt 1 — Haben <span class="tp-step-sub">Was willst du haben?</span></div>
+    <div class="tp-field"><input type="text" class="tp-input" data-field="haben" data-idx="0" placeholder="z. B. Eigene Wohnung" autocomplete="off"></div>
+    <div class="tp-field"><input type="text" class="tp-input" data-field="haben" data-idx="1" placeholder="…" autocomplete="off"></div>
+    <div class="tp-field"><input type="text" class="tp-input" data-field="haben" data-idx="2" placeholder="…" autocomplete="off"></div>
+    <div class="tp-field"><input type="text" class="tp-input" data-field="haben" data-idx="3" placeholder="…" autocomplete="off"></div>
+  </div>
+
+  <div class="tp-card">
+    <div class="tp-step-title">Schritt 2 — Sein <span class="tp-step-sub">Wer willst du sein?</span></div>
+    <div class="tp-field"><input type="text" class="tp-input" data-field="sein" data-idx="0" placeholder="z. B. Diszipliniert & fokussiert" autocomplete="off"></div>
+    <div class="tp-field"><input type="text" class="tp-input" data-field="sein" data-idx="1" placeholder="…" autocomplete="off"></div>
+    <div class="tp-field"><input type="text" class="tp-input" data-field="sein" data-idx="2" placeholder="…" autocomplete="off"></div>
+  </div>
+
+  <div class="tp-card">
+    <div class="tp-step-title">Schritt 3 — Tun <span class="tp-step-sub">Was musst du tun?</span></div>
+    <div class="tp-tun-row">
+      <input type="text" class="tp-input" data-field="tun-text" data-idx="0" placeholder="Aktion…" autocomplete="off">
+      <input type="number" class="tp-input tp-cost-input" data-field="tun-cost" data-idx="0" placeholder="€" min="0">
+    </div>
+    <div class="tp-tun-row">
+      <input type="text" class="tp-input" data-field="tun-text" data-idx="1" placeholder="Aktion…" autocomplete="off">
+      <input type="number" class="tp-input tp-cost-input" data-field="tun-cost" data-idx="1" placeholder="€" min="0">
+    </div>
+    <div class="tp-tun-row">
+      <input type="text" class="tp-input" data-field="tun-text" data-idx="2" placeholder="Aktion…" autocomplete="off">
+      <input type="number" class="tp-input tp-cost-input" data-field="tun-cost" data-idx="2" placeholder="€" min="0">
+    </div>
+  </div>
+
+  <div class="tp-card">
+    <div class="tp-step-title">Schritt 4 — Kostenrechner</div>
+    <div class="tp-field-row">
+      <div class="tp-field"><label>Monatliche Kosten (€)</label><input type="number" class="tp-input" id="tpMonthlyCost" min="0"></div>
+      <div class="tp-field"><label>Einmalige Kosten (€)</label><input type="number" class="tp-input" id="tpOneTimeCost" min="0"></div>
+    </div>
+    <div class="tp-field"><label>Verfügbares Budget / Monat (€)</label><input type="number" class="tp-input" id="tpBudget" min="0"></div>
+    <div class="tp-cost-summary">
+      <div class="tp-cost-row"><span>Summe gesamt</span><span id="tpSum">0 €</span></div>
+      <div class="tp-cost-row"><span>Nötiges Monatseinkommen</span><span id="tpIncomeNeeded">0 €</span></div>
+    </div>
+    <div class="tp-traffic">
+      <span class="tp-traffic-dot" id="tpTrafficDot"></span>
+      <span id="tpTrafficLabel">Budget eingeben für Realisierbarkeits-Check</span>
+    </div>
+  </div>
+
+  <div class="tp-card">
+    <div class="tp-step-title">Schritt 5 — Aktionsplan</div>
+    <button type="button" class="tp-generate-btn" id="tpGenerateBtn">🤖 Aktionsplan generieren</button>
+    <div class="tp-status" id="tpGenerateStatus"></div>
+    <div class="tp-action-list" id="tpActionList"></div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+
+  function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
+  function padArray(arr, len, fill) {
+    const a = Array.isArray(arr) ? arr.slice(0, len) : [];
+    while (a.length < len) a.push(fill);
+    return a;
+  }
+  function formatEuro(n) { return Math.round(n || 0).toLocaleString('de-DE') + ' €'; }
+
+  function loadPlan(months) {
+    const raw = loadJSON('traumplan-' + months, null) || {};
+    return {
+      haben: padArray(raw.haben, 4, ''),
+      sein: padArray(raw.sein, 3, ''),
+      tun: padArray(raw.tun, 3, null).map((t) => (t && typeof t === 'object') ? { text: t.text || '', cost: Number(t.cost) || 0 } : { text: '', cost: 0 }),
+      monthlyCost: Number(raw.monthlyCost) || 0,
+      oneTimeCost: Number(raw.oneTimeCost) || 0,
+      availableBudget: Number(raw.availableBudget) || 0,
+      actionPlan: Array.isArray(raw.actionPlan) ? raw.actionPlan : [],
+      updatedAt: raw.updatedAt || 0,
+    };
+  }
+  function savePlan(months, plan) {
+    plan.updatedAt = Date.now();
+    localStorage.setItem('traumplan-' + months, JSON.stringify(plan));
+  }
+  function updateField(months, mutateFn) {
+    const plan = loadPlan(months);
+    mutateFn(plan);
+    savePlan(months, plan);
+    return plan;
+  }
+
+  let currentMonths = Number(localStorage.getItem('traumplan-active')) || 3;
+  if ([3, 6, 12].indexOf(currentMonths) === -1) currentMonths = 3;
+
+  /* ---------- form <-> storage ---------- */
+  function loadPlanIntoForm(months) {
+    const plan = loadPlan(months);
+    document.querySelectorAll('[data-field="haben"]').forEach((el) => { el.value = plan.haben[Number(el.dataset.idx)] || ''; });
+    document.querySelectorAll('[data-field="sein"]').forEach((el) => { el.value = plan.sein[Number(el.dataset.idx)] || ''; });
+    document.querySelectorAll('[data-field="tun-text"]').forEach((el) => { el.value = plan.tun[Number(el.dataset.idx)].text || ''; });
+    document.querySelectorAll('[data-field="tun-cost"]').forEach((el) => { el.value = plan.tun[Number(el.dataset.idx)].cost || ''; });
+    $('tpMonthlyCost').value = plan.monthlyCost || '';
+    $('tpOneTimeCost').value = plan.oneTimeCost || '';
+    $('tpBudget').value = plan.availableBudget || '';
+    renderActionList(plan.actionPlan);
+    renderCostSummary(months);
+  }
+
+  document.querySelectorAll('[data-field="haben"]').forEach((el) => {
+    el.addEventListener('input', () => updateField(currentMonths, (p) => { p.haben[Number(el.dataset.idx)] = el.value; }));
+  });
+  document.querySelectorAll('[data-field="sein"]').forEach((el) => {
+    el.addEventListener('input', () => updateField(currentMonths, (p) => { p.sein[Number(el.dataset.idx)] = el.value; }));
+  });
+  document.querySelectorAll('[data-field="tun-text"]').forEach((el) => {
+    el.addEventListener('input', () => updateField(currentMonths, (p) => { p.tun[Number(el.dataset.idx)].text = el.value; }));
+  });
+  document.querySelectorAll('[data-field="tun-cost"]').forEach((el) => {
+    el.addEventListener('input', () => {
+      updateField(currentMonths, (p) => { p.tun[Number(el.dataset.idx)].cost = Number(el.value) || 0; });
+    });
+  });
+  $('tpMonthlyCost').addEventListener('input', () => {
+    updateField(currentMonths, (p) => { p.monthlyCost = Number($('tpMonthlyCost').value) || 0; });
+    renderCostSummary(currentMonths);
+  });
+  $('tpOneTimeCost').addEventListener('input', () => {
+    updateField(currentMonths, (p) => { p.oneTimeCost = Number($('tpOneTimeCost').value) || 0; });
+    renderCostSummary(currentMonths);
+  });
+  $('tpBudget').addEventListener('input', () => {
+    updateField(currentMonths, (p) => { p.availableBudget = Number($('tpBudget').value) || 0; });
+    renderCostSummary(currentMonths);
+  });
+
+  /* ---------- Schritt 4: Kostenrechner ---------- */
+  function renderCostSummary(months) {
+    const plan = loadPlan(months);
+    const sum = plan.monthlyCost * months + plan.oneTimeCost;
+    const incomeNeeded = months > 0 ? sum / months : 0;
+    $('tpSum').textContent = formatEuro(sum);
+    $('tpIncomeNeeded').textContent = formatEuro(incomeNeeded) + ' / Monat';
+
+    const dot = $('tpTrafficDot');
+    const label = $('tpTrafficLabel');
+    dot.classList.remove('tp-green', 'tp-amber', 'tp-red');
+    if (!plan.availableBudget) {
+      label.textContent = 'Budget eingeben für Realisierbarkeits-Check';
+    } else {
+      const ratio = incomeNeeded / plan.availableBudget;
+      if (ratio <= 0.8) { dot.classList.add('tp-green'); label.textContent = 'Gut machbar'; }
+      else if (ratio <= 1.2) { dot.classList.add('tp-amber'); label.textContent = 'Knapp machbar'; }
+      else { dot.classList.add('tp-red'); label.textContent = 'Eng — Plan anpassen'; }
+    }
+  }
+
+  /* ---------- Schritt 5: Aktionsplan ---------- */
+  function renderActionList(actionPlan) {
+    const el = $('tpActionList');
+    el.innerHTML = '';
+    if (!actionPlan.length) {
+      const empty = document.createElement('div');
+      empty.className = 'tp-empty';
+      empty.textContent = 'Noch kein Aktionsplan generiert.';
+      el.appendChild(empty);
+      return;
+    }
+    actionPlan.forEach((item, idx) => {
+      const row = document.createElement('label');
+      row.className = 'tp-action-row' + (item.done ? ' tp-action-done' : '');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = !!item.done;
+      cb.addEventListener('change', () => {
+        updateField(currentMonths, (p) => { if (p.actionPlan[idx]) p.actionPlan[idx].done = cb.checked; });
+        row.classList.toggle('tp-action-done', cb.checked);
+      });
+      const span = document.createElement('span');
+      span.textContent = item.text;
+      row.appendChild(cb); row.appendChild(span);
+      el.appendChild(row);
+    });
+  }
+
+  async function generateActionPlan(plan, months, apiKey) {
+    const prompt =
+      'Du bist ein pragmatischer Lebensplanungs-Coach. Hier ist ein ' + months + '-Monats-Traumplan:\n' +
+      'HABEN: ' + (plan.haben.filter(Boolean).join(', ') || '—') + '\n' +
+      'SEIN: ' + (plan.sein.filter(Boolean).join(', ') || '—') + '\n' +
+      'TUN: ' + (plan.tun.map((t) => t.text).filter(Boolean).join(', ') || '—') + '\n' +
+      'Nötiges Monatseinkommen: ' + Math.round((plan.monthlyCost * months + plan.oneTimeCost) / months) + ' €\n\n' +
+      'Erstelle einen konkreten, umsetzbaren Aktionsplan mit 5-8 Schritten, um dieses Ziel in ' + months + ' Monaten zu erreichen. ' +
+      'Antworte AUSSCHLIESSLICH mit einem JSON-Array aus Strings, keine Erklärung, keine Code-Fences. Beispiel: ["Schritt 1...", "Schritt 2..."]';
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    const data = await res.json();
+    const content = (data && data.content && data.content[0] && data.content[0].text) || '';
+    const arr = JSON.parse(content);
+    if (!Array.isArray(arr)) throw new Error('bad response');
+    return arr.map((t) => ({ text: String(t), done: false }));
+  }
+
+  $('tpGenerateBtn').addEventListener('click', async () => {
+    let apiKey = '';
+    try { apiKey = (localStorage.getItem('nova_lite_api_key') || '').trim(); } catch (e) {}
+    const statusEl = $('tpGenerateStatus');
+    statusEl.classList.remove('tp-status-error');
+    if (!apiKey) {
+      statusEl.textContent = 'Kein API-Key gesetzt — auf der Nova-Seite hinzufügen.';
+      statusEl.classList.add('tp-status-error');
+      return;
+    }
+    const plan = loadPlan(currentMonths);
+    statusEl.textContent = 'Generiere…';
+    $('tpGenerateBtn').disabled = true;
+    try {
+      const actionPlan = await generateActionPlan(plan, currentMonths, apiKey);
+      updateField(currentMonths, (p) => { p.actionPlan = actionPlan; });
+      renderActionList(actionPlan);
+      statusEl.textContent = 'Plan generiert ✓';
+    } catch (e) {
+      statusEl.textContent = 'Generieren fehlgeschlagen — bitte erneut versuchen.';
+      statusEl.classList.add('tp-status-error');
+    } finally {
+      $('tpGenerateBtn').disabled = false;
+    }
+  });
+
+  /* ---------- Tabs ---------- */
+  function setActiveTab(months) {
+    currentMonths = months;
+    localStorage.setItem('traumplan-active', String(months));
+    document.querySelectorAll('.tp-tab').forEach((t) => t.classList.toggle('on', Number(t.dataset.months) === months));
+    loadPlanIntoForm(months);
+  }
+  document.querySelectorAll('.tp-tab').forEach((tab) => {
+    tab.addEventListener('click', () => setActiveTab(Number(tab.dataset.months)));
+  });
+
+  setActiveTab(currentMonths);
+  window.addEventListener('storage', () => loadPlanIntoForm(currentMonths));
+})();
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof initCloudSync !== 'function') return;
+  initCloudSync({
+    appKey: 'traumplan',
+    syncedKeys: ['traumplan-3', 'traumplan-6', 'traumplan-12', 'traumplan-active'],
+    onApplied: function () {
+      window.dispatchEvent(new Event('storage'));
+    }
+  });
+});
+</script>
+</body>
+</html>
