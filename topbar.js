@@ -148,6 +148,18 @@ body.has-bottombar {
   .bottombar-tab { font-size: 10px; }
 }
 
+/* iPhone 12 Mini and similarly narrow phones */
+@media (max-width: 390px) {
+  body { font-size: 14px; }
+  .bottombar {
+    height: 60px;
+    padding: 4px 0 env(safe-area-inset-bottom);
+  }
+  body.has-bottombar {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
 /* === Global mobile lockdown ===
    1) Hide the right-side scrollbar on phones (iOS uses overlay scrollbars anyway).
    2) Stop iOS auto-text-size-adjust.

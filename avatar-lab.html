@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+window.onerror = function (msg, src, line) {
+  console.error('[Error]', msg, line);
+  return true;
+};
+window.onunhandledrejection = function (e) {
+  console.error('[Promise]', e.reason);
+  e.preventDefault();
+};
+</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Avatar Lab · Nova</title>

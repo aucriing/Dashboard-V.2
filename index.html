@@ -2,6 +2,16 @@
 <html lang="en">
 <head>
 <script src="lock.js"></script>
+<script>
+window.onerror = function (msg, src, line) {
+  console.error('[Error]', msg, line);
+  return true;
+};
+window.onunhandledrejection = function (e) {
+  console.error('[Promise]', e.reason);
+  e.preventDefault();
+};
+</script>
 <script src="/api/config"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -333,6 +343,21 @@ body::after {
 }
 .briefing-item input[type="checkbox"] { accent-color: #6BE3A4; flex-shrink: 0; }
 .briefing-empty { font-size: 13px; color: var(--text-tertiary); font-style: italic; }
+@keyframes verpasst-pulse {
+  0%,100% { border-color: rgba(239,68,68,0.8); }
+  50% { border-color: rgba(239,68,68,0.2); }
+}
+.briefing-item.missed {
+  padding: 4px 8px; margin: -4px -8px; border-radius: 8px;
+  border: 1px solid rgba(239,68,68,0.8);
+  animation: verpasst-pulse 1.5s ease-in-out infinite;
+}
+.briefing-missed-badge {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+  padding: 2px 6px; border-radius: 99px; background: rgba(239,68,68,0.18); color: #FF6B6B;
+  margin-left: auto; flex-shrink: 0;
+}
+.briefing-missed-badge::before { content: '● '; }
 .briefing-add-row { display: flex; gap: 6px; margin-top: 8px; }
 .briefing-add-row input {
   flex: 1; min-width: 0; padding: 8px 10px;
@@ -357,6 +382,13 @@ body::after {
 }
 .briefing-start-btn:hover { filter: brightness(1.05); }
 .briefing-start-btn:active { transform: translateY(1px); }
+
+/* ===== iPhone 12 Mini and similarly narrow phones ===== */
+@media (max-width: 390px) {
+  body { font-size: 14px; padding: 12px 12px 70px; }
+  .bento { grid-template-columns: 1fr; gap: 10px; }
+  .tile, .tile.big, .tile.wide { grid-column: span 1; width: 100%; }
+}
 </style>
 </head>
 <body>
@@ -1043,9 +1075,10 @@ body::after {
     const el = $('briefingRoutines');
     el.innerHTML = '';
     if (!pending.length) { renderEmpty(el, 'Alle Routinen erledigt ✓'); return; }
+    const isMissed = new Date().getHours() >= 10;
     pending.forEach((it) => {
       const row = document.createElement('label');
-      row.className = 'briefing-item';
+      row.className = 'briefing-item' + (isMissed ? ' missed' : '');
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.addEventListener('change', () => {
@@ -1056,6 +1089,12 @@ body::after {
       });
       const label = document.createElement('span'); label.textContent = it.text;
       row.appendChild(cb); row.appendChild(label);
+      if (isMissed) {
+        const badge = document.createElement('span');
+        badge.className = 'briefing-missed-badge';
+        badge.textContent = 'VERPASST';
+        row.appendChild(badge);
+      }
       el.appendChild(row);
     });
   }
@@ -1080,12 +1119,21 @@ body::after {
     const el = $('briefingSupps');
     el.innerHTML = '';
     if (!morning.length) { renderEmpty(el, 'Keine Morgen-Supplemente'); return; }
+    const nowHour = new Date().getHours();
     morning.forEach((it) => {
+      const isTaken = !!taken[it.id];
+      const isMissed = !isTaken && nowHour >= 10;
       const row = document.createElement('div');
-      row.className = 'briefing-item';
-      const mark = document.createElement('span'); mark.textContent = taken[it.id] ? '✓' : '•';
+      row.className = 'briefing-item' + (isMissed ? ' missed' : '');
+      const mark = document.createElement('span'); mark.textContent = isTaken ? '✓' : '•';
       const label = document.createElement('span'); label.textContent = it.dose ? (it.name + ' (' + it.dose + ')') : it.name;
       row.appendChild(mark); row.appendChild(label);
+      if (isMissed) {
+        const badge = document.createElement('span');
+        badge.className = 'briefing-missed-badge';
+        badge.textContent = 'VERPASST';
+        row.appendChild(badge);
+      }
       el.appendChild(row);
     });
   }
@@ -1338,7 +1386,7 @@ body::after {
       }
     });
   }
-  setInterval(checkScheduledNotifs, 30 * 1000);
+  const notifCheckTimer = setInterval(checkScheduledNotifs, 30 * 1000);
 
   /* ===================== Supabase sync ===================== */
   function getDeviceId() {
@@ -1411,7 +1459,13 @@ body::after {
   window.addEventListener('online', syncNow);
   window.addEventListener('offline', () => setSyncDot(true));
   syncNow();
-  setInterval(syncNow, 30 * 1000);
+  const syncTimer = setInterval(syncNow, 30 * 1000);
+
+  /* ---------- performance: clear page-level intervals when leaving ---------- */
+  window.addEventListener('pagehide', () => {
+    clearInterval(notifCheckTimer);
+    clearInterval(syncTimer);
+  });
 })();
 </script>
 </body>

@@ -2,6 +2,16 @@
 <html lang="en">
 <head>
 <script src="lock.js"></script>
+<script>
+window.onerror = function (msg, src, line) {
+  console.error('[Error]', msg, line);
+  return true;
+};
+window.onunhandledrejection = function (e) {
+  console.error('[Promise]', e.reason);
+  e.preventDefault();
+};
+</script>
 <script src="/api/config"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -1264,10 +1274,27 @@ img, video, canvas, svg { max-width: 100%; }
 }
 
 .hidden { display: none !important; }
+
+/* ===== Back link ===== */
+.back-link {
+  position: fixed; top: 16px; left: 16px; z-index: 100;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+  color: #F2C063; opacity: 0.7;
+  text-decoration: none; transition: opacity 0.15s;
+}
+.back-link:hover { opacity: 1; }
+
+/* ===== iPhone 12 Mini and similarly narrow phones ===== */
+@media (max-width: 390px) {
+  body { font-size: 14px; padding-left: 12px; padding-right: 12px; }
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
+<a href="index.html" class="back-link" id="backLink">← Dashboard</a>
+<span class="sync-dot" id="syncDot" title="Sync status"></span>
 
 <div class="po-shell">
   <button class="po-day-pill" type="button" id="dayPill" title="Tap to switch the day filter to today's split">
@@ -3582,6 +3609,18 @@ img, video, canvas, svg { max-width: 100%; }
   .nv-dots i { display:inline-block; width:5px; height:5px; margin:0 1px; border-radius:50%; background:#9b8aff; animation: nvb 1s infinite; }
   .nv-dots i:nth-child(2){animation-delay:.15s} .nv-dots i:nth-child(3){animation-delay:.3s}
   @keyframes nvb { 0%,100%{opacity:.3;transform:translateY(0)} 50%{opacity:1;transform:translateY(-3px)} }
+
+  /* ===== Sync status dot ===== */
+  .sync-dot {
+    position: fixed; top: 12px; right: 12px; z-index: 250;
+    width: 9px; height: 9px; border-radius: 50%;
+    background: #6BE3A4; box-shadow: 0 0 6px rgba(107,227,164,0.7);
+  }
+  .sync-dot.offline {
+    background: #FF5C5C; box-shadow: 0 0 6px rgba(255,92,92,0.7);
+    animation: sync-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes sync-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 </style>
 <button id="nvFab" type="button" aria-label="Open Nova coach"><span class="nv-online"></span></button>
 <div id="nvPanel" role="dialog" aria-label="Nova gym coach">
@@ -3691,6 +3730,32 @@ img, video, canvas, svg { max-width: 100%; }
   $('nvSend').addEventListener('click', ()=>{ const t=input.value; input.value=''; ask(t); });
   input.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ const t=input.value; input.value=''; ask(t); } });
   document.querySelectorAll('.nv-chip').forEach(c=> c.addEventListener('click', ()=> ask(c.getAttribute('data-q'))));
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  function goBackToDashboard() {
+    document.body.style.transition = 'opacity 150ms ease';
+    document.body.style.opacity = '0';
+    setTimeout(() => { window.location.href = 'index.html'; }, 150);
+  }
+  const backLinkEl = document.getElementById('backLink');
+  if (backLinkEl) backLinkEl.addEventListener('click', (e) => { e.preventDefault(); goBackToDashboard(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (document.body.classList.contains('topbar-modal-open')) return; // a viewer/modal is open — let it handle Escape itself
+    goBackToDashboard();
+  });
+
+  function setSyncDot(state) {
+    const dot = document.getElementById('syncDot');
+    if (dot) dot.classList.toggle('offline', state === 'red');
+  }
+  window.addEventListener('online', () => setSyncDot('green'));
+  window.addEventListener('offline', () => setSyncDot('red'));
+  setSyncDot(navigator.onLine ? 'green' : 'red');
 })();
 </script>
 

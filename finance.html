@@ -2,6 +2,16 @@
 <html lang="en">
 <head>
 <script src="lock.js"></script>
+<script>
+window.onerror = function (msg, src, line) {
+  console.error('[Error]', msg, line);
+  return true;
+};
+window.onunhandledrejection = function (e) {
+  console.error('[Promise]', e.reason);
+  e.preventDefault();
+};
+</script>
 <script src="/api/config"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
@@ -1570,13 +1580,31 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 @media (max-width: 600px) {
   .sub-auto-toggle { width: 100%; justify-content: space-between; padding: 12px 14px; }
 }
+
+/* ===== iPhone 12 Mini and similarly narrow phones ===== */
+@media (max-width: 390px) {
+  body { font-size: 14px; padding-left: 12px; padding-right: 12px; }
+}
+
+/* ===== Sync status dot ===== */
+.sync-dot {
+  position: fixed; top: 12px; right: 12px; z-index: 250;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #6BE3A4; box-shadow: 0 0 6px rgba(107,227,164,0.7);
+}
+.sync-dot.offline {
+  background: #FF5C5C; box-shadow: 0 0 6px rgba(255,92,92,0.7);
+  animation: sync-pulse 1.6s ease-in-out infinite;
+}
+@keyframes sync-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 </style>
 </head>
 <body>
 <div class="shell">
 
 <!-- ===== BACK BUTTON ===== -->
-<a href="index.html" class="fin-back-btn" aria-label="Back to dashboard">
+<span class="sync-dot" id="syncDot" title="Sync status"></span>
+<a href="index.html" class="fin-back-btn" id="finBackBtn" aria-label="Back to dashboard">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
   <span>Back</span>
 </a>
@@ -3392,6 +3420,28 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
+</script>
+
+<script>
+(function () {
+  'use strict';
+  function goBackToDashboard() {
+    document.body.style.transition = 'opacity 150ms ease';
+    document.body.style.opacity = '0';
+    setTimeout(() => { window.location.href = 'index.html'; }, 150);
+  }
+  const backBtn = document.getElementById('finBackBtn');
+  if (backBtn) backBtn.addEventListener('click', (e) => { e.preventDefault(); goBackToDashboard(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') goBackToDashboard(); });
+
+  function setSyncDot(state) {
+    const dot = document.getElementById('syncDot');
+    if (dot) dot.classList.toggle('offline', state === 'red');
+  }
+  window.addEventListener('online', () => setSyncDot('green'));
+  window.addEventListener('offline', () => setSyncDot('red'));
+  setSyncDot(navigator.onLine ? 'green' : 'red');
+})();
 </script>
 
 </body>

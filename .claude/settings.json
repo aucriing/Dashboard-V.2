@@ -6,7 +6,13 @@
       "Bash(grep -n \"weatherCity\\\\|weatherKey\\\\|WEATHER_KEY\\\\|settingsSave\\\\|whoop-btn\\\\\" id=\\\\\"whAction\\\\\"\\\\|</div>\\\\s*$\" index.html)",
       "Bash(grep -n \"Weather city\\\\|weatherCity\\\\|weatherKey\\\\|OpenWeatherMap\\\\|settingsSave\\\\|section-divider\\\\|WHOOP</label>\\\\|whAction\\\\|</div>\\\\s*</div>\\\\s*</div>\\\\s*$\\\\|id=\\\\\"settingsBg\\\\\"\\\\|id=\\\\\"briefingBg\\\\\"\" index.html)",
       "Bash(grep -n \"\\\\$\\('weatherKey'\\)\" index.html)",
-      "Bash(grep -n 'class=\"section\">\\\\s*$\\\\|id=\"weeklyReviewBg\"\\\\|id=\"journalBg\"\\\\|id=\"analysisModalBg\"\\\\|^<div class=\"page\">\\\\|^</div>\\\\s*$' main.html)"
+      "Bash(grep -n 'class=\"section\">\\\\s*$\\\\|id=\"weeklyReviewBg\"\\\\|id=\"journalBg\"\\\\|id=\"analysisModalBg\"\\\\|^<div class=\"page\">\\\\|^</div>\\\\s*$' main.html)",
+      "Bash(grep -n '`;' topbar.js)",
+      "Bash(node --check topbar.js)",
+      "Bash(grep -n \"anyModalOpen\\(\\);\\\\s*$\" health.html)",
+      "Bash(grep -n \"goBackToDashboard\\(\\);\\\\s*$\" health.html)",
+      "Bash(node --check /tmp/_chk.js)",
+      "Bash(rm -f /tmp/_chk.js)"
     ]
   }
 }

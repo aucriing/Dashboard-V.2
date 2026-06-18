@@ -2,6 +2,16 @@
 <html lang="en">
 <head>
 <script src="lock.js"></script>
+<script>
+window.onerror = function (msg, src, line) {
+  console.error('[Error]', msg, line);
+  return true;
+};
+window.onunhandledrejection = function (e) {
+  console.error('[Promise]', e.reason);
+  e.preventDefault();
+};
+</script>
 <script src="/api/config"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -180,9 +190,27 @@ body::after {
   .curve-wrap svg { height: 200px; }
   .energy-desc { display: none; }
 }
+
+/* ===== iPhone 12 Mini and similarly narrow phones ===== */
+@media (max-width: 390px) {
+  body { font-size: 14px; padding-left: 12px; padding-right: 12px; }
+}
+
+/* ===== Sync status dot ===== */
+.sync-dot {
+  position: fixed; top: 12px; right: 12px; z-index: 250;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #6BE3A4; box-shadow: 0 0 6px rgba(107,227,164,0.7);
+}
+.sync-dot.offline {
+  background: #FF5C5C; box-shadow: 0 0 6px rgba(255,92,92,0.7);
+  animation: sync-pulse 1.6s ease-in-out infinite;
+}
+@keyframes sync-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 </style>
 </head>
 <body>
+<span class="sync-dot" id="syncDot" title="Sync status"></span>
 <div class="page">
 
   <h1 class="dash-title">Caffeine</h1>
@@ -635,6 +663,19 @@ body::after {
     window.initCloudSync({ appKey:'caffeine', syncedKeys:[LOGS_KEY,CUSTOM_KEY],
       onApplied:function(){ logs=loadJSON(LOGS_KEY,[]); custom=loadJSON(CUSTOM_KEY,[]); renderResults($('search').value); renderAll(); } });
   }
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  function setSyncDot(state) {
+    const dot = document.getElementById('syncDot');
+    if (dot) dot.classList.toggle('offline', state === 'red');
+  }
+  window.addEventListener('online', () => setSyncDot('green'));
+  window.addEventListener('offline', () => setSyncDot('red'));
+  setSyncDot(navigator.onLine ? 'green' : 'red');
 })();
 </script>
 </body>

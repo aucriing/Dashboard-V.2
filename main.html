@@ -2,6 +2,16 @@
 <html lang="en">
 <head>
 <script src="lock.js"></script>
+<script>
+window.onerror = function (msg, src, line) {
+  console.error('[Error]', msg, line);
+  return true;
+};
+window.onunhandledrejection = function (e) {
+  console.error('[Promise]', e.reason);
+  e.preventDefault();
+};
+</script>
 <script src="/api/config"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -601,11 +611,12 @@ body::after {
 
 /* ===== Back link ===== */
 .back-link {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 13px; font-weight: 600; color: var(--text-tertiary);
-  text-decoration: none; margin-bottom: 10px;
+  position: fixed; top: 16px; left: 16px; z-index: 100;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+  color: #F2C063; opacity: 0.7;
+  text-decoration: none; transition: opacity 0.15s;
 }
-.back-link:hover { color: var(--text-primary); }
+.back-link:hover { opacity: 1; }
 
 /* ===== To Do Heute ===== */
 .td-card {
@@ -619,9 +630,13 @@ body::after {
   -webkit-backdrop-filter: blur(24px) saturate(1.2);
   transition: border-color 0.3s, box-shadow 0.3s;
 }
+@keyframes verpasst-pulse {
+  0%,100% { border-color: rgba(239,68,68,0.8); }
+  50% { border-color: rgba(239,68,68,0.2); }
+}
 .td-card.td-missed {
-  border-color: rgba(255,107,107,0.5);
-  box-shadow: 0 0 0 1px rgba(255,107,107,0.25);
+  border-color: rgba(239,68,68,0.8);
+  animation: verpasst-pulse 1.5s ease-in-out infinite;
 }
 .td-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 .td-card-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
@@ -630,10 +645,9 @@ body::after {
   font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
   padding: 4px 9px; border-radius: 999px;
   background: rgba(255,107,107,0.18); color: var(--danger);
-  animation: td-pulse 1.4s ease-in-out infinite;
 }
+.td-missed-badge::before { content: '● '; }
 .td-card.td-missed .td-missed-badge { display: inline-block; }
-@keyframes td-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 
 .td-list { display: flex; flex-direction: column; gap: 6px; }
 .td-row {
@@ -807,9 +821,6 @@ body::after {
 .td-modal-close:hover { color: var(--text-primary); }
 .td-modal-body { font-size: 13px; color: var(--text-secondary); line-height: 1.6; white-space: pre-line; }
 
-/* ===== Smooth back navigation ===== */
-.page { transition: opacity 0.22s ease; }
-.page.fade-out { opacity: 0; }
 
 /* ===== Progress section ===== */
 .prog-card {
@@ -899,12 +910,32 @@ body::after {
 .wj-analyze-btn:hover { background: rgba(167,139,250,0.18); }
 .wj-analyze-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 .wj-status { text-align: center; font-size: 11px; color: var(--text-tertiary); min-height: 14px; margin-top: 6px; }
+
+/* ===== iPhone 12 Mini and similarly narrow phones ===== */
+@media (max-width: 390px) {
+  body { font-size: 14px; padding: 12px 12px 70px; }
+  .kb-board, .prog-stats-grid { grid-template-columns: 1fr; }
+  .gm-card, .td-card, .prog-card, .kb-col { width: 100%; }
+}
+
+/* ===== Sync status dot ===== */
+.sync-dot {
+  position: fixed; top: 12px; right: 12px; z-index: 250;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #6BE3A4; box-shadow: 0 0 6px rgba(107,227,164,0.7);
+}
+.sync-dot.offline {
+  background: #FF5C5C; box-shadow: 0 0 6px rgba(255,92,92,0.7);
+  animation: sync-pulse 1.6s ease-in-out infinite;
+}
+@keyframes sync-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 </style>
 </head>
 <body>
 <div class="page">
 
   <a href="index.html" class="back-link" id="backLink">← Dashboard</a>
+  <span class="sync-dot" id="syncDot" title="Sync status"></span>
   <h1 class="dash-title">Rowans Dashboard</h1>
 
   <div class="ticker-row">
@@ -1841,12 +1872,18 @@ body::after {
   loadTomorrow();
   renderStreak();
   updateDayRing();
-  setInterval(updateDayRing, 60 * 1000);
+  const dayRingTimer = setInterval(updateDayRing, 60 * 1000);
   startTicker();
 
   // Re-render when storage changes from another tab (or our bridged parent).
   window.addEventListener('storage', () => {
     loadToday(); loadTomorrow(); renderStreak();
+  });
+
+  // ---------- performance: clear page-level intervals when leaving ----------
+  window.addEventListener('pagehide', () => {
+    clearInterval(dayRingTimer);
+    clearInterval(tickerTimer);
   });
 })();
 </script>
@@ -1879,10 +1916,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
   function goBackToDashboard() {
-    const page = document.querySelector('.page');
-    if (!page) { window.location.href = 'index.html'; return; }
-    page.classList.add('fade-out');
-    setTimeout(() => { window.location.href = 'index.html'; }, 220);
+    document.body.style.transition = 'opacity 150ms ease';
+    document.body.style.opacity = '0';
+    setTimeout(() => { window.location.href = 'index.html'; }, 150);
   }
   const backLinkEl = $('backLink');
   if (backLinkEl) {
@@ -1895,6 +1931,15 @@ document.addEventListener('DOMContentLoaded', function () {
     if (anyModalOpen()) return;
     goBackToDashboard();
   });
+
+  /* ---------- sync status dot ---------- */
+  function setSyncDot(state) {
+    const dot = $('syncDot');
+    if (dot) dot.classList.toggle('offline', state === 'red');
+  }
+  window.addEventListener('online', () => setSyncDot('green'));
+  window.addEventListener('offline', () => setSyncDot('red'));
+  setSyncDot(navigator.onLine ? 'green' : 'red');
 
   /* ---------- date helpers (mirrors the 6 AM rollover used above) ---------- */
   function pad2(n) { return String(n).padStart(2, '0'); }
@@ -2078,7 +2123,7 @@ document.addEventListener('DOMContentLoaded', function () {
   $('tdRoutineInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addRoutine(); });
 
   renderAllTodo();
-  setInterval(renderAllTodo, 60 * 1000);
+  const todoHeuteTimer = setInterval(renderAllTodo, 60 * 1000);
   window.addEventListener('storage', renderAllTodo);
   window.addEventListener('goals-changed', renderAllTodo);
 
@@ -2165,6 +2210,8 @@ document.addEventListener('DOMContentLoaded', function () {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') $('analysisModalBg').classList.remove('show'); });
 
   renderAnalysis();
+
+  window.addEventListener('pagehide', () => { clearInterval(todoHeuteTimer); });
 })();
 </script>
 
@@ -2407,6 +2454,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const item = document.createElement('div');
       item.className = 'prog-photo-item';
       const img = document.createElement('img');
+      img.loading = 'lazy';
       img.src = p.dataUrl; img.alt = p.date;
       const date = document.createElement('div');
       date.className = 'prog-photo-date'; date.textContent = p.date;
@@ -2646,7 +2694,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (afterCutoff && !jrShown && Date.now() > jrSnoozeUntil) openJournal();
   }
   checkTriggers();
-  setInterval(checkTriggers, 60 * 1000);
+  const triggerCheckTimer = setInterval(checkTriggers, 60 * 1000);
+  window.addEventListener('pagehide', () => { clearInterval(triggerCheckTimer); });
 })();
 </script>
 </body>

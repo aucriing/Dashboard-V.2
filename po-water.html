@@ -15,6 +15,16 @@ Contact: rowan.wisere@gmail.com
 <html lang="en">
 <head>
 <script src="lock.js"></script>
+<script>
+window.onerror = function (msg, src, line) {
+  console.error('[Error]', msg, line);
+  return true;
+};
+window.onunhandledrejection = function (e) {
+  console.error('[Promise]', e.reason);
+  e.preventDefault();
+};
+</script>
 <script src="/api/config"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -458,9 +468,29 @@ html, body {
   .shell { padding: 16px 12px 60px; }
   .water-num { font-size: 48px; }
 }
+
+/* ===== iPhone 12 Mini and similarly narrow phones ===== */
+@media (max-width: 390px) {
+  body { font-size: 14px; }
+  .shell { padding: 12px 12px 60px; }
+}
+
+/* ===== Sync status dot (hidden when embedded as an iframe, e.g. inside health.html) ===== */
+.sync-dot {
+  position: fixed; top: 12px; right: 12px; z-index: 250;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #6BE3A4; box-shadow: 0 0 6px rgba(107,227,164,0.7);
+}
+.sync-dot.offline {
+  background: #FF5C5C; box-shadow: 0 0 6px rgba(255,92,92,0.7);
+  animation: sync-pulse 1.6s ease-in-out infinite;
+}
+@keyframes sync-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 </style>
 </head>
 <body>
+
+<span class="sync-dot" id="syncDot" title="Sync status" style="display:none;"></span>
 
 <div class="shell">
 
@@ -1131,6 +1161,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
+</script>
+
+<script>
+(function () {
+  'use strict';
+  let isEmbedded = true;
+  try { isEmbedded = window.self !== window.top; } catch (e) {}
+  if (isEmbedded) return; // health.html already shows its own sync dot
+
+  const dot = document.getElementById('syncDot');
+  if (dot) dot.style.display = '';
+  function setSyncDot(state) {
+    if (dot) dot.classList.toggle('offline', state === 'red');
+  }
+  window.addEventListener('online', () => setSyncDot('green'));
+  window.addEventListener('offline', () => setSyncDot('red'));
+  setSyncDot(navigator.onLine ? 'green' : 'red');
+})();
 </script>
 
 </body>

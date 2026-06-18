@@ -2,6 +2,16 @@
 <html lang="en">
 <head>
 <script src="lock.js"></script>
+<script>
+window.onerror = function (msg, src, line) {
+  console.error('[Error]', msg, line);
+  return true;
+};
+window.onunhandledrejection = function (e) {
+  console.error('[Promise]', e.reason);
+  e.preventDefault();
+};
+</script>
 <script src="/api/config"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -66,11 +76,12 @@ body::after {
 
 /* ===== Back link ===== */
 .back-link {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 13px; font-weight: 600; color: var(--text-tertiary);
-  text-decoration: none; margin-bottom: 10px;
+  position: fixed; top: 16px; left: 16px; z-index: 100;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+  color: #F2C063; opacity: 0.7;
+  text-decoration: none; transition: opacity 0.15s;
 }
-.back-link:hover { color: var(--text-primary); }
+.back-link:hover { opacity: 1; }
 
 /* ===== Tabs ===== */
 .tp-tabs {
@@ -169,12 +180,31 @@ body::after {
   .tp-tun-row { flex-wrap: wrap; }
   .tp-cost-input { width: 100%; }
 }
+
+/* ===== iPhone 12 Mini and similarly narrow phones ===== */
+@media (max-width: 390px) {
+  body { font-size: 14px; padding: 12px 12px 70px; }
+  .tp-card { width: 100%; }
+}
+
+/* ===== Sync status dot ===== */
+.sync-dot {
+  position: fixed; top: 12px; right: 12px; z-index: 250;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #6BE3A4; box-shadow: 0 0 6px rgba(107,227,164,0.7);
+}
+.sync-dot.offline {
+  background: #FF5C5C; box-shadow: 0 0 6px rgba(255,92,92,0.7);
+  animation: sync-pulse 1.6s ease-in-out infinite;
+}
+@keyframes sync-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 </style>
 </head>
 <body>
 <div class="page">
 
-  <a href="index.html" class="back-link">← Dashboard</a>
+  <a href="index.html" class="back-link" id="backLink">← Dashboard</a>
+  <span class="sync-dot" id="syncDot" title="Sync status"></span>
   <h1 class="dash-title">⭐ Traumplan</h1>
 
   <div class="tp-tabs" id="tpTabs">
@@ -454,6 +484,28 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
+</script>
+
+<script>
+(function () {
+  'use strict';
+  function goBackToDashboard() {
+    document.body.style.transition = 'opacity 150ms ease';
+    document.body.style.opacity = '0';
+    setTimeout(() => { window.location.href = 'index.html'; }, 150);
+  }
+  const backLinkEl = document.getElementById('backLink');
+  if (backLinkEl) backLinkEl.addEventListener('click', (e) => { e.preventDefault(); goBackToDashboard(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') goBackToDashboard(); });
+
+  function setSyncDot(state) {
+    const dot = document.getElementById('syncDot');
+    if (dot) dot.classList.toggle('offline', state === 'red');
+  }
+  window.addEventListener('online', () => setSyncDot('green'));
+  window.addEventListener('offline', () => setSyncDot('red'));
+  setSyncDot(navigator.onLine ? 'green' : 'red');
+})();
 </script>
 </body>
 </html>
