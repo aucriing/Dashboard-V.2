@@ -806,6 +806,99 @@ body::after {
 .td-modal-close { border: 0; background: transparent; color: var(--text-tertiary); font-size: 24px; line-height: 1; cursor: pointer; padding: 0 4px; }
 .td-modal-close:hover { color: var(--text-primary); }
 .td-modal-body { font-size: 13px; color: var(--text-secondary); line-height: 1.6; white-space: pre-line; }
+
+/* ===== Smooth back navigation ===== */
+.page { transition: opacity 0.22s ease; }
+.page.fade-out { opacity: 0; }
+
+/* ===== Progress section ===== */
+.prog-card {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px; padding: 20px; margin-bottom: 14px;
+  backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2);
+}
+.prog-card-title { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 14px; }
+.prog-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 4px; }
+.prog-cal-day {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 2px; border-radius: 10px; cursor: pointer;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.15s, border-color 0.15s;
+}
+.prog-cal-day:hover { background: rgba(255,255,255,0.06); }
+.prog-cal-day .pcd-label { font-size: 10px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.04em; }
+.prog-cal-day .pcd-num { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.prog-cal-day.is-today { border-color: #F2C063; box-shadow: 0 0 0 1px rgba(242,192,99,0.35); }
+.prog-cal-day.is-active { background: rgba(107,227,164,0.14); }
+.prog-cal-day.is-active .pcd-num { color: #6BE3A4; }
+.prog-cal-day.is-inactive { background: rgba(255,255,255,0.02); }
+.prog-cal-day.is-future { opacity: 0.4; cursor: default; }
+.prog-day-detail {
+  margin-top: 10px; padding: 12px 14px; border-radius: 10px;
+  background: rgba(255,255,255,0.03); font-size: 12.5px; color: var(--text-secondary); line-height: 1.6;
+}
+
+.prog-photo-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.prog-photo-add-btn {
+  border: 1px dashed rgba(255,255,255,0.18); background: transparent; color: var(--text-secondary);
+  font-family: inherit; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 10px; cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.prog-photo-add-btn:hover { border-color: rgba(255,255,255,0.35); color: var(--text-primary); }
+.prog-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px; }
+.prog-photo-item { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 1; background: rgba(255,255,255,0.04); }
+.prog-photo-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.prog-photo-date {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 5px;
+  font-family: var(--font-mono); font-size: 9px; color: #fff; text-align: center;
+  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.75));
+}
+.prog-photo-del {
+  position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border-radius: 50%;
+  border: 0; background: rgba(0,0,0,0.55); color: #fff; font-size: 11px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s;
+}
+.prog-photo-item:hover .prog-photo-del { opacity: 1; }
+.prog-empty { font-size: 12px; font-style: italic; color: var(--text-tertiary); }
+
+.prog-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.prog-stat { text-align: center; padding: 12px 6px; border-radius: 12px; background: rgba(255,255,255,0.03); }
+.prog-stat .ps-num { font-size: 22px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.prog-stat .ps-label { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 4px; }
+
+/* ===== Weekly Review + Tagesabschluss Journal (reuse .td-modal-bg / .td-modal) ===== */
+.wj-field { margin-bottom: 14px; }
+.wj-field label {
+  display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  color: var(--text-tertiary); margin-bottom: 6px;
+}
+.wj-textarea, .wj-input {
+  width: 100%; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.28); color: var(--text-primary);
+  font-family: inherit; font-size: 13px; outline: none; resize: vertical;
+  transition: border-color 0.18s, background 0.18s;
+}
+.wj-textarea:focus, .wj-input:focus { border-color: rgba(255,255,255,0.30); background: rgba(0,0,0,0.36); }
+.wj-three { display: flex; flex-direction: column; gap: 8px; }
+.wj-mood-row { display: flex; align-items: center; gap: 12px; }
+.wj-mood-row input[type="range"] { flex: 1; accent-color: #6BE3A4; }
+.wj-mood-num { font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--text-primary); width: 28px; text-align: center; }
+.wj-actions { display: flex; gap: 10px; margin-top: 6px; }
+.wj-btn-primary, .wj-btn-secondary, .wj-analyze-btn {
+  flex: 1; padding: 12px; border-radius: 11px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.wj-btn-primary {
+  border: 1px solid rgba(255,255,255,0.85); background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); color: #0A0A0B;
+}
+.wj-btn-secondary { border: 1px solid rgba(255,255,255,0.10); background: transparent; color: var(--text-secondary); }
+.wj-btn-secondary:hover { background: rgba(255,255,255,0.05); }
+.wj-analyze-btn {
+  width: 100%; margin-top: 4px; border: 1px solid rgba(167,139,250,0.35);
+  background: rgba(167,139,250,0.10); color: #A78BFA;
+}
+.wj-analyze-btn:hover { background: rgba(167,139,250,0.18); }
+.wj-analyze-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.wj-status { text-align: center; font-size: 11px; color: var(--text-tertiary); min-height: 14px; margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -1015,6 +1108,34 @@ body::after {
     </div>
   </div>
 
+  <div class="section">
+    <div class="section-title">Progress</div>
+
+    <div class="prog-card">
+      <div class="prog-card-title">Activity Kalender</div>
+      <div class="prog-cal" id="progCal"></div>
+      <div class="prog-day-detail" id="progDayDetail" style="display:none;"></div>
+    </div>
+
+    <div class="prog-card">
+      <div class="prog-photo-row">
+        <div class="prog-card-title" style="margin-bottom:0;">Foto Progress</div>
+        <button type="button" class="prog-photo-add-btn" id="progPhotoAddBtn">+ Foto</button>
+        <input type="file" id="progPhotoInput" accept="image/*" capture="environment" multiple style="display:none">
+      </div>
+      <div class="prog-photo-grid" id="progPhotoGrid"></div>
+    </div>
+
+    <div class="prog-card">
+      <div class="prog-card-title">Stats</div>
+      <div class="prog-stats-grid">
+        <div class="prog-stat"><div class="ps-num" id="progStatStreak">0</div><div class="ps-label">Streak</div></div>
+        <div class="prog-stat"><div class="ps-num" id="progStatTasks">0</div><div class="ps-label">Aufgaben diese Woche</div></div>
+        <div class="prog-stat"><div class="ps-num" id="progStatHabit">0%</div><div class="ps-label">Habit Rate</div></div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <div class="td-modal-bg" id="analysisModalBg">
@@ -1024,6 +1145,92 @@ body::after {
       <button class="td-modal-close" id="analysisModalClose" type="button" aria-label="Close">×</button>
     </div>
     <div class="td-modal-body" id="analysisFullText"></div>
+  </div>
+</div>
+
+<div class="td-modal-bg" id="weeklyReviewBg">
+  <div class="td-modal" role="dialog" aria-label="Weekly Review">
+    <div class="td-modal-head">
+      <span class="td-modal-title">📅 Weekly Review</span>
+      <button class="td-modal-close" id="wrClose" type="button" aria-label="Close">×</button>
+    </div>
+
+    <div class="wj-field">
+      <label>Was lief diese Woche gut?</label>
+      <textarea class="wj-textarea" id="wrGood" rows="2"></textarea>
+    </div>
+    <div class="wj-field">
+      <label>Was lief schlecht?</label>
+      <textarea class="wj-textarea" id="wrBad" rows="2"></textarea>
+    </div>
+    <div class="wj-field">
+      <label>Was war mein größter Win?</label>
+      <textarea class="wj-textarea" id="wrWin" rows="2"></textarea>
+    </div>
+    <div class="wj-field">
+      <label>Was eliminiere ich nächste Woche?</label>
+      <textarea class="wj-textarea" id="wrEliminate" rows="2"></textarea>
+    </div>
+    <div class="wj-field">
+      <label>Fear Setting — Was hält mich zurück?</label>
+      <textarea class="wj-textarea" id="wrFear" rows="2"></textarea>
+    </div>
+
+    <button type="button" class="wj-analyze-btn" id="wrAnalyzeBtn">🧠 KI Analyse generieren</button>
+    <div class="wj-status" id="wrStatus"></div>
+    <div class="td-modal-body" id="wrSummary" style="margin-top:10px;"></div>
+
+    <div class="wj-actions" style="margin-top:14px;">
+      <button type="button" class="wj-btn-secondary" id="wrLater">Später</button>
+      <button type="button" class="wj-btn-primary" id="wrSave">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="td-modal-bg" id="journalBg">
+  <div class="td-modal" role="dialog" aria-label="Tagesabschluss Journal">
+    <div class="td-modal-head">
+      <span class="td-modal-title">🌙 Tagesabschluss</span>
+      <button class="td-modal-close" id="jrClose" type="button" aria-label="Close">×</button>
+    </div>
+
+    <div class="wj-field">
+      <label>✅ 3 gute Dinge heute</label>
+      <div class="wj-three">
+        <input type="text" class="wj-input" id="jrGood0" placeholder="…">
+        <input type="text" class="wj-input" id="jrGood1" placeholder="…">
+        <input type="text" class="wj-input" id="jrGood2" placeholder="…">
+      </div>
+    </div>
+    <div class="wj-field">
+      <label>❌ 3 Dinge zum Verbessern</label>
+      <div class="wj-three">
+        <input type="text" class="wj-input" id="jrBad0" placeholder="…">
+        <input type="text" class="wj-input" id="jrBad1" placeholder="…">
+        <input type="text" class="wj-input" id="jrBad2" placeholder="…">
+      </div>
+    </div>
+    <div class="wj-field">
+      <label>🔄 Morgen anders</label>
+      <input type="text" class="wj-input" id="jrDifferent" placeholder="…">
+    </div>
+    <div class="wj-field">
+      <label>📝 Notizen</label>
+      <textarea class="wj-textarea" id="jrNotes" rows="2"></textarea>
+    </div>
+    <div class="wj-field">
+      <label>Mood</label>
+      <div class="wj-mood-row">
+        <input type="range" id="jrMood" min="1" max="10" value="6">
+        <span class="wj-mood-num" id="jrMoodNum">6</span>
+      </div>
+    </div>
+
+    <div class="wj-status" id="jrStatus"></div>
+    <div class="wj-actions">
+      <button type="button" class="wj-btn-secondary" id="jrLater">Später</button>
+      <button type="button" class="wj-btn-primary" id="jrSave">Speichern</button>
+    </div>
   </div>
 </div>
 
@@ -1663,12 +1870,30 @@ document.addEventListener('DOMContentLoaded', function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
 
+  /* ---------- smooth back navigation: fadeOut -> navigate ---------- */
+  const BACK_BLOCKING_MODALS = ['analysisModalBg', 'weeklyReviewBg', 'journalBg'];
+  function anyModalOpen() {
+    return BACK_BLOCKING_MODALS.some((id) => {
+      const el = $(id);
+      return el && el.classList.contains('show');
+    });
+  }
+  function goBackToDashboard() {
+    const page = document.querySelector('.page');
+    if (!page) { window.location.href = 'index.html'; return; }
+    page.classList.add('fade-out');
+    setTimeout(() => { window.location.href = 'index.html'; }, 220);
+  }
+  const backLinkEl = $('backLink');
+  if (backLinkEl) {
+    backLinkEl.addEventListener('click', (e) => { e.preventDefault(); goBackToDashboard(); });
+  }
+
   /* ---------- Escape also goes back to the dashboard (unless a modal is open) ---------- */
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    const modalBg = $('analysisModalBg');
-    if (modalBg && modalBg.classList.contains('show')) return;
-    window.location.href = 'index.html';
+    if (anyModalOpen()) return;
+    goBackToDashboard();
   });
 
   /* ---------- date helpers (mirrors the 6 AM rollover used above) ---------- */
@@ -2089,6 +2314,339 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   renderBoard();
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateToKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function activeDateKey() {
+    const now = new Date();
+    if (now.getHours() < 6) { const d = new Date(now); d.setDate(d.getDate() - 1); return dateToKey(d); }
+    return dateToKey(now);
+  }
+  // Monday-start week containing today's "active date" (6 AM rollover).
+  function currentWeekDates() {
+    const now = new Date();
+    if (now.getHours() < 6) now.setDate(now.getDate() - 1);
+    const dow = now.getDay(); // 0=Sun..6=Sat
+    const mondayOffset = dow === 0 ? -6 : 1 - dow;
+    const monday = new Date(now);
+    monday.setDate(monday.getDate() + mondayOffset);
+    const days = [];
+    for (let i = 0; i < 7; i++) { const d = new Date(monday); d.setDate(d.getDate() + i); days.push(d); }
+    return days;
+  }
+
+  function dayActivity(dateKey) {
+    const goals = loadJSON('goals:' + dateKey, []);
+    const goalsDone = Array.isArray(goals) ? goals.filter((g) => g && g.done).length : 0;
+    const routinesDone = Object.keys(loadJSON('routines:done:' + dateKey, {})).length;
+    const suppsTaken = Object.keys(loadJSON('stack:taken:' + dateKey, {})).length;
+    const tasks = loadJSON('tasks-' + dateKey, []);
+    const tasksDone = Array.isArray(tasks) ? tasks.filter((t) => t && t.done).length : 0;
+    const hasJournal = !!localStorage.getItem('journal:' + dateKey);
+    return { goalsDone, routinesDone, suppsTaken, tasksDone, hasJournal, total: goalsDone + routinesDone + suppsTaken + tasksDone + (hasJournal ? 1 : 0) };
+  }
+
+  /* ---------- Activity calendar ---------- */
+  const DOW_LABELS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+  function renderCalendar() {
+    const el = $('progCal');
+    el.innerHTML = '';
+    const today = activeDateKey();
+    currentWeekDates().forEach((d, idx) => {
+      const key = dateToKey(d);
+      const cell = document.createElement('div');
+      cell.className = 'prog-cal-day';
+      const isFuture = key > today;
+      const isToday = key === today;
+      const act = dayActivity(key);
+      if (isToday) cell.classList.add('is-today');
+      else if (isFuture) cell.classList.add('is-future');
+      else cell.classList.add(act.total > 0 ? 'is-active' : 'is-inactive');
+      cell.innerHTML = '<span class="pcd-label">' + DOW_LABELS[idx] + '</span><span class="pcd-num">' + d.getDate() + '</span>';
+      if (!isFuture) cell.addEventListener('click', () => showDayDetail(key, act));
+      el.appendChild(cell);
+    });
+  }
+  function showDayDetail(key, act) {
+    const el = $('progDayDetail');
+    const parts = [];
+    if (act.goalsDone) parts.push(act.goalsDone + ' Ziel(e) erledigt');
+    if (act.routinesDone) parts.push(act.routinesDone + ' Routine(n) erledigt');
+    if (act.suppsTaken) parts.push(act.suppsTaken + ' Supplement(e) genommen');
+    if (act.tasksDone) parts.push(act.tasksDone + ' Aufgabe(n) erledigt');
+    if (act.hasJournal) parts.push('Journal ausgefüllt');
+    el.textContent = key + ' — ' + (parts.length ? parts.join(' · ') : 'Keine Aktivität');
+    el.style.display = 'block';
+  }
+
+  /* ---------- Foto Progress ---------- */
+  function loadPhotos() { const p = loadJSON('progress-photos', []); return Array.isArray(p) ? p : []; }
+  function savePhotos(arr) {
+    try { localStorage.setItem('progress-photos', JSON.stringify(arr)); return true; } catch (e) { return false; }
+  }
+  function renderPhotos() {
+    const grid = $('progPhotoGrid');
+    grid.innerHTML = '';
+    const photos = loadPhotos();
+    if (!photos.length) {
+      const empty = document.createElement('div');
+      empty.className = 'prog-empty';
+      empty.textContent = 'Noch keine Fotos — füge dein erstes Progress-Foto hinzu.';
+      grid.appendChild(empty);
+      return;
+    }
+    photos.slice().reverse().forEach((p) => {
+      const item = document.createElement('div');
+      item.className = 'prog-photo-item';
+      const img = document.createElement('img');
+      img.src = p.dataUrl; img.alt = p.date;
+      const date = document.createElement('div');
+      date.className = 'prog-photo-date'; date.textContent = p.date;
+      const del = document.createElement('button');
+      del.type = 'button'; del.className = 'prog-photo-del'; del.textContent = '×';
+      del.addEventListener('click', () => { savePhotos(loadPhotos().filter((x) => x.id !== p.id)); renderPhotos(); });
+      item.appendChild(img); item.appendChild(date); item.appendChild(del);
+      grid.appendChild(item);
+    });
+  }
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = () => { img.src = String(reader.result); };
+      reader.onerror = reject;
+      img.onload = () => {
+        const maxW = 800;
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+  $('progPhotoAddBtn').addEventListener('click', () => $('progPhotoInput').click());
+  $('progPhotoInput').addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    for (const file of files) {
+      try {
+        const dataUrl = await compressImage(file);
+        const photos = loadPhotos();
+        photos.push({ id: 'p' + Date.now() + Math.random().toString(36).slice(2, 6), date: activeDateKey(), dataUrl });
+        if (!savePhotos(photos)) { alert('Speicher voll — bitte alte Fotos löschen.'); break; }
+      } catch (err) { /* skip unreadable file */ }
+    }
+    renderPhotos();
+  });
+
+  /* ---------- Stats ---------- */
+  function renderStats() {
+    const streak = loadJSON('goal_streak_v1', { count: 0 });
+    $('progStatStreak').textContent = streak.count || 0;
+
+    const week = currentWeekDates();
+    const today = activeDateKey();
+    const routineItems = loadJSON('routines:items', []);
+    const routineCount = Array.isArray(routineItems) ? routineItems.length : 0;
+    let tasksDone = 0, routineDoneTotal = 0, daysElapsed = 0;
+    week.forEach((d) => {
+      const key = dateToKey(d);
+      if (key > today) return;
+      daysElapsed++;
+      const goals = loadJSON('goals:' + key, []);
+      tasksDone += Array.isArray(goals) ? goals.filter((g) => g && g.done).length : 0;
+      const tasks = loadJSON('tasks-' + key, []);
+      tasksDone += Array.isArray(tasks) ? tasks.filter((t) => t && t.done).length : 0;
+      routineDoneTotal += Object.keys(loadJSON('routines:done:' + key, {})).length;
+    });
+    $('progStatTasks').textContent = tasksDone;
+
+    const expected = routineCount * daysElapsed;
+    $('progStatHabit').textContent = (expected > 0 ? Math.round((routineDoneTotal / expected) * 100) : 0) + '%';
+  }
+
+  renderCalendar();
+  renderPhotos();
+  renderStats();
+  window.addEventListener('storage', () => { renderCalendar(); renderStats(); });
+  window.addEventListener('goals-changed', () => { renderCalendar(); renderStats(); });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateToKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function activeDateKey() {
+    const now = new Date();
+    if (now.getHours() < 6) { const d = new Date(now); d.setDate(d.getDate() - 1); return dateToKey(d); }
+    return dateToKey(now);
+  }
+  function getISOWeekKey(d) {
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    return date.getUTCFullYear() + '-W' + pad2(weekNo);
+  }
+  async function callClaude(prompt, maxTokens) {
+    let apiKey = '';
+    try { apiKey = (localStorage.getItem('nova_lite_api_key') || '').trim(); } catch (e) {}
+    if (!apiKey) throw new Error('no-api-key');
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }),
+    });
+    const data = await res.json();
+    return ((data && data.content && data.content[0] && data.content[0].text) || '').trim();
+  }
+
+  /* ===================== Weekly Review ===================== */
+  function weeklyReviewKey() { return 'weekly-review-' + getISOWeekKey(new Date()); }
+  function loadWeeklyReview() { return loadJSON(weeklyReviewKey(), {}); }
+  function saveWeeklyReview(obj) { localStorage.setItem(weeklyReviewKey(), JSON.stringify(obj)); }
+  function collectWeeklyReviewForm() {
+    return {
+      good: $('wrGood').value.trim(), bad: $('wrBad').value.trim(), win: $('wrWin').value.trim(),
+      eliminate: $('wrEliminate').value.trim(), fear: $('wrFear').value.trim(),
+    };
+  }
+  function openWeeklyReview() {
+    const data = loadWeeklyReview();
+    $('wrGood').value = data.good || ''; $('wrBad').value = data.bad || ''; $('wrWin').value = data.win || '';
+    $('wrEliminate').value = data.eliminate || ''; $('wrFear').value = data.fear || '';
+    $('wrSummary').textContent = data.aiSummary || '';
+    $('wrStatus').textContent = '';
+    $('weeklyReviewBg').classList.add('show');
+  }
+  function closeWeeklyReview() { $('weeklyReviewBg').classList.remove('show'); }
+
+  $('wrSave').addEventListener('click', () => {
+    const data = Object.assign(loadWeeklyReview(), collectWeeklyReviewForm(), { updatedAt: Date.now() });
+    saveWeeklyReview(data);
+    localStorage.setItem('weekly-review-shown-' + getISOWeekKey(new Date()), 'true');
+    closeWeeklyReview();
+  });
+  $('wrLater').addEventListener('click', () => {
+    localStorage.setItem('weekly-review-snooze-until', String(Date.now() + 30 * 60000));
+    closeWeeklyReview();
+  });
+  $('wrClose').addEventListener('click', closeWeeklyReview);
+  $('weeklyReviewBg').addEventListener('click', (e) => { if (e.target.id === 'weeklyReviewBg') closeWeeklyReview(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeWeeklyReview(); });
+
+  $('wrAnalyzeBtn').addEventListener('click', async () => {
+    const statusEl = $('wrStatus');
+    const form = collectWeeklyReviewForm();
+    statusEl.textContent = 'Analysiere…';
+    $('wrAnalyzeBtn').disabled = true;
+    try {
+      const prompt = 'Du bist ein pragmatischer Wochenrückblick-Coach. Hier ist der Rückblick:\n' +
+        'Gut lief: ' + (form.good || '—') + '\n' +
+        'Schlecht lief: ' + (form.bad || '—') + '\n' +
+        'Größter Win: ' + (form.win || '—') + '\n' +
+        'Eliminieren nächste Woche: ' + (form.eliminate || '—') + '\n' +
+        'Was hält zurück (Fear Setting): ' + (form.fear || '—') + '\n\n' +
+        'Schreibe eine knappe, ehrliche Wochenzusammenfassung in 3-5 Sätzen auf Deutsch, mit einer konkreten Empfehlung für die kommende Woche. Keine Einleitung, kein Markdown.';
+      const summary = await callClaude(prompt, 400);
+      $('wrSummary').textContent = summary;
+      saveWeeklyReview(Object.assign(loadWeeklyReview(), form, { aiSummary: summary }));
+      statusEl.textContent = 'Analyse fertig ✓';
+    } catch (e) {
+      statusEl.textContent = e && e.message === 'no-api-key' ? 'Kein API-Key gesetzt — auf der Nova-Seite hinzufügen.' : 'Analyse fehlgeschlagen.';
+    } finally {
+      $('wrAnalyzeBtn').disabled = false;
+    }
+  });
+
+  /* ===================== Tagesabschluss Journal ===================== */
+  function collectJournalForm() {
+    return {
+      good: [$('jrGood0').value.trim(), $('jrGood1').value.trim(), $('jrGood2').value.trim()],
+      bad: [$('jrBad0').value.trim(), $('jrBad1').value.trim(), $('jrBad2').value.trim()],
+      different: $('jrDifferent').value.trim(),
+      notes: $('jrNotes').value.trim(),
+      mood: Number($('jrMood').value),
+      date: activeDateKey(),
+    };
+  }
+  function openJournal() {
+    ['jrGood0', 'jrGood1', 'jrGood2', 'jrBad0', 'jrBad1', 'jrBad2', 'jrDifferent', 'jrNotes'].forEach((id) => { $(id).value = ''; });
+    $('jrMood').value = 6; $('jrMoodNum').textContent = '6';
+    $('jrStatus').textContent = '';
+    $('journalBg').classList.add('show');
+  }
+  function closeJournal() { $('journalBg').classList.remove('show'); }
+  $('jrMood').addEventListener('input', () => { $('jrMoodNum').textContent = $('jrMood').value; });
+
+  async function analyzeJournalInBackground(entry) {
+    try {
+      const prompt = 'Analysiere diesen Tagesabschluss-Journaleintrag knapp (2-3 Sätze, Deutsch, kein Markdown):\n' +
+        'Gute Dinge: ' + (entry.good.filter(Boolean).join(', ') || '—') + '\n' +
+        'Zu verbessern: ' + (entry.bad.filter(Boolean).join(', ') || '—') + '\n' +
+        'Morgen anders: ' + (entry.different || '—') + '\n' +
+        'Notizen: ' + (entry.notes || '—') + '\n' +
+        'Mood: ' + entry.mood + '/10\n' +
+        'Gib eine kurze Einsicht/Muster-Erkennung und einen Tipp für morgen.';
+      const insight = await callClaude(prompt, 250);
+      localStorage.setItem('journal-insights-' + entry.date, JSON.stringify({ insight, entry, generatedAt: Date.now() }));
+    } catch (e) { /* best-effort background analysis — fail silently */ }
+  }
+
+  $('jrSave').addEventListener('click', () => {
+    const entry = collectJournalForm();
+    localStorage.setItem('journal:' + entry.date, JSON.stringify(entry));
+    localStorage.setItem('journal-shown-' + entry.date, 'true');
+    closeJournal();
+    analyzeJournalInBackground(entry);
+  });
+  $('jrLater').addEventListener('click', () => {
+    localStorage.setItem('journal-snooze-until', String(Date.now() + 30 * 60000));
+    closeJournal();
+  });
+  $('jrClose').addEventListener('click', closeJournal);
+  $('journalBg').addEventListener('click', (e) => { if (e.target.id === 'journalBg') closeJournal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeJournal(); });
+
+  /* ===================== Time-based triggers ===================== */
+  function checkTriggers() {
+    if ($('weeklyReviewBg').classList.contains('show') || $('journalBg').classList.contains('show')) return;
+    const now = new Date();
+
+    const weekKey = getISOWeekKey(now);
+    const wrShown = localStorage.getItem('weekly-review-shown-' + weekKey);
+    const wrSnoozeUntil = Number(localStorage.getItem('weekly-review-snooze-until')) || 0;
+    if (now.getDay() === 0 && now.getHours() >= 20 && !wrShown && Date.now() > wrSnoozeUntil) {
+      openWeeklyReview();
+      return;
+    }
+
+    const todayKey = activeDateKey();
+    const jrShown = localStorage.getItem('journal-shown-' + todayKey);
+    const jrSnoozeUntil = Number(localStorage.getItem('journal-snooze-until')) || 0;
+    const afterCutoff = now.getHours() > 22 || (now.getHours() === 22 && now.getMinutes() >= 30);
+    if (afterCutoff && !jrShown && Date.now() > jrSnoozeUntil) openJournal();
+  }
+  checkTriggers();
+  setInterval(checkTriggers, 60 * 1000);
 })();
 </script>
 </body>
