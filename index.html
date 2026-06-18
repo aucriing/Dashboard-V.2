@@ -146,6 +146,7 @@ body::after {
 .hub-head .dash-title { margin: 0; }
 .hub-head-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .sync-dot {
+  position: fixed; top: 12px; right: 12px; z-index: 250;
   width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
   background: #6BE3A4; box-shadow: 0 0 6px rgba(107,227,164,0.7);
 }
@@ -221,6 +222,46 @@ body::after {
 .whoop-stat .l { font-size: 9.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 5px; }
 .whoop-btn { width: 100%; margin-top: 14px; padding: 11px; border: 1px solid rgba(255,255,255,0.12); border-radius: 11px; background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: background 0.15s, color 0.15s; }
 .whoop-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+
+/* ===== Settings: API keys, Darstellung, Daten, Benachrichtigungen ===== */
+.field-hint { text-transform: none; font-weight: 500; letter-spacing: normal; color: var(--text-tertiary); font-size: 10px; }
+.eye-btn {
+  flex-shrink: 0; width: 42px; height: 42px; border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.04);
+  color: var(--text-secondary); cursor: pointer; font-size: 15px;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.eye-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.eye-btn.on { color: var(--text-primary); background: rgba(255,255,255,0.10); }
+
+.data-btn-row { display: flex; flex-direction: column; gap: 8px; }
+.data-btn {
+  width: 100%; padding: 12px; border-radius: 11px; border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04); color: var(--text-primary);
+  font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s;
+}
+.data-btn:hover { background: rgba(255,255,255,0.08); }
+.data-btn-danger { border-color: rgba(255,107,107,0.3); color: #FF6B6B; }
+.data-btn-danger:hover { background: rgba(255,107,107,0.08); }
+
+.notif-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; }
+.notif-label { font-size: 13px; color: var(--text-secondary); }
+.toggle-switch {
+  width: 42px; height: 24px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06); position: relative; cursor: pointer; padding: 0; flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+.toggle-switch.on { background: #6BE3A4; border-color: #6BE3A4; }
+.toggle-knob {
+  position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
+  background: #FFFFFF; transition: transform 0.2s;
+}
+.toggle-switch.on .toggle-knob { transform: translateX(18px); }
+.ios-pwa-hint {
+  font-size: 11px; color: var(--text-tertiary); line-height: 1.5; margin-top: 12px;
+  padding: 10px 12px; background: rgba(255,255,255,0.03); border-radius: 10px;
+}
 
 /* ===== Boot animation ===== */
 .boot-overlay {
@@ -542,11 +583,6 @@ body::after {
       <input class="set-input" id="weatherCity" type="text" placeholder="e.g. Berlin">
     </div>
 
-    <div class="field">
-      <label class="field-label">OpenWeatherMap API key</label>
-      <input class="set-input" id="weatherKey" type="password" placeholder="paste your API key">
-    </div>
-
     <button class="set-save" id="settingsSave" type="button">Save</button>
     <div class="set-status" id="settingsStatus"></div>
 
@@ -565,6 +601,113 @@ body::after {
       </div>
       <button class="whoop-btn" id="whAction" type="button">Sync now</button>
     </div>
+
+    <div class="section-divider"></div>
+
+    <label class="field-label">API Keys</label>
+
+    <div class="field">
+      <label class="field-label">Claude API Key</label>
+      <div class="field-row">
+        <input class="set-input" id="apiClaudeKey" type="password" placeholder="sk-ant-…" autocomplete="off">
+        <button type="button" class="eye-btn" data-target="apiClaudeKey">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">OpenWeatherMap Key</label>
+      <div class="field-row">
+        <input class="set-input" id="apiWeatherKey" type="password" placeholder="paste your API key" autocomplete="off">
+        <button type="button" class="eye-btn" data-target="apiWeatherKey">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">FinnHub Key</label>
+      <div class="field-row">
+        <input class="set-input" id="apiFinnhubKey" type="password" placeholder="for stocks/crypto ticker" autocomplete="off">
+        <button type="button" class="eye-btn" data-target="apiFinnhubKey">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Supabase URL</label>
+      <div class="field-row">
+        <input class="set-input" id="apiSupabaseUrl" type="password" placeholder="https://…supabase.co" autocomplete="off">
+        <button type="button" class="eye-btn" data-target="apiSupabaseUrl">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Supabase Anon Key</label>
+      <div class="field-row">
+        <input class="set-input" id="apiSupabaseKey" type="password" placeholder="paste your anon key" autocomplete="off">
+        <button type="button" class="eye-btn" data-target="apiSupabaseKey">👁</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Oura Ring Token <span class="field-hint">(für spätere Integration)</span></label>
+      <div class="field-row">
+        <input class="set-input" id="apiOuraToken" type="password" placeholder="paste your token" autocomplete="off">
+        <button type="button" class="eye-btn" data-target="apiOuraToken">👁</button>
+      </div>
+    </div>
+    <button class="set-save" id="apiSaveBtn" type="button">API Keys speichern</button>
+    <div class="set-status" id="apiSaveStatus"></div>
+
+    <div class="section-divider"></div>
+
+    <label class="field-label">Darstellung</label>
+
+    <div class="field">
+      <label class="field-label">Dashboard Name</label>
+      <input class="set-input" id="dispName" type="text" placeholder="Daniels Dashboard v2">
+    </div>
+    <div class="field">
+      <label class="field-label">Theme</label>
+      <div class="seg" id="themeSeg">
+        <button type="button" class="on" disabled>Dark</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Sprache</label>
+      <div class="seg" id="langSeg">
+        <button type="button" data-l="de" class="on">Deutsch</button>
+        <button type="button" data-l="en">English</button>
+      </div>
+    </div>
+    <button class="set-save" id="dispSaveBtn" type="button">Darstellung speichern</button>
+    <div class="set-status" id="dispSaveStatus"></div>
+
+    <div class="section-divider"></div>
+
+    <label class="field-label">Daten</label>
+    <div class="data-btn-row">
+      <button class="data-btn" id="dataExportBtn" type="button">⬇️ Alle Daten exportieren</button>
+      <button class="data-btn" id="dataImportBtn" type="button">⬆️ Daten importieren</button>
+      <input type="file" id="dataImportFile" accept="application/json" style="display:none">
+      <button class="data-btn data-btn-danger" id="dataDeleteBtn" type="button">🗑️ Alle Daten löschen</button>
+    </div>
+    <div class="set-status" id="dataStatus"></div>
+
+    <div class="section-divider"></div>
+
+    <label class="field-label">Benachrichtigungen</label>
+    <div class="notif-row">
+      <span class="notif-label">Morgen-Briefing (08:00)</span>
+      <button type="button" class="toggle-switch" id="notifMorning" role="switch" aria-checked="false"><span class="toggle-knob"></span></button>
+    </div>
+    <div class="notif-row">
+      <span class="notif-label">Supplement Reminder</span>
+      <button type="button" class="toggle-switch" id="notifSupplement" role="switch" aria-checked="false"><span class="toggle-knob"></span></button>
+    </div>
+    <div class="notif-row">
+      <span class="notif-label">Abendjournal (22:30)</span>
+      <button type="button" class="toggle-switch" id="notifEvening" role="switch" aria-checked="false"><span class="toggle-knob"></span></button>
+    </div>
+    <div class="notif-row">
+      <span class="notif-label">MIT Reminder (10:00)</span>
+      <button type="button" class="toggle-switch" id="notifMit" role="switch" aria-checked="false"><span class="toggle-knob"></span></button>
+    </div>
+    <button class="data-btn" id="notifTestBtn" type="button" style="margin-top:10px;">🔔 Test Notification</button>
+    <div class="set-status" id="notifStatus"></div>
+    <div class="ios-pwa-hint">📱 iPhone: Für Benachrichtigungen das Dashboard über Teilen → „Zum Home-Bildschirm" als App installieren. Sie funktionieren nur, solange das Dashboard geöffnet ist.</div>
   </div>
 </div>
 
@@ -674,7 +817,6 @@ body::after {
     $('activity').value = (p.activityHrsPerWeek != null ? p.activityHrsPerWeek : '');
     const ws = loadJSON(WEATHER_KEY, {});
     $('weatherCity').value = ws.city || '';
-    $('weatherKey').value = ws.apiKey || '';
   }
 
   /* ---------- save back into po_water_v1 (merge, never overwrite logs) ---------- */
@@ -689,7 +831,7 @@ body::after {
     w.profile.sex = sex;
     const act = parseFloat($('activity').value); if (act >= 0 && !isNaN(act)) w.profile.activityHrsPerWeek = act;
     saveJSON(WATER_KEY, w);
-    saveJSON(WEATHER_KEY, { city: $('weatherCity').value.trim(), apiKey: $('weatherKey').value.trim() });
+    saveJSON(WEATHER_KEY, Object.assign({}, loadJSON(WEATHER_KEY, {}), { city: $('weatherCity').value.trim() }));
     const s = $('settingsStatus'); s.textContent = 'Saved ✓';
     setTimeout(() => { s.textContent = ''; }, 1800);
   }
@@ -864,10 +1006,11 @@ body::after {
   async function renderWeather() {
     const el = $('briefingWeather');
     const w = loadJSON('weather_settings_v1', {});
-    if (!w.apiKey || !w.city) { el.textContent = '— Wetter nicht verfügbar —'; return; }
+    const apiKey = (loadJSON('settings-api', {}) || {}).weatherKey || '';
+    if (!apiKey || !w.city) { el.textContent = '— Wetter nicht verfügbar —'; return; }
     el.textContent = 'Lade Wetter…';
     try {
-      const r = await fetch('https://api.openweathermap.org/data/2.5/weather?q=' + encodeURIComponent(w.city) + '&appid=' + encodeURIComponent(w.apiKey) + '&units=metric&lang=de');
+      const r = await fetch('https://api.openweathermap.org/data/2.5/weather?q=' + encodeURIComponent(w.city) + '&appid=' + encodeURIComponent(apiKey) + '&units=metric&lang=de');
       if (!r.ok) throw new Error('weather ' + r.status);
       const j = await r.json();
       const temp = Math.round(j.main.temp);
@@ -1014,6 +1157,261 @@ body::after {
   }
   renderTraumplanWidget();
   window.addEventListener('storage', renderTraumplanWidget);
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
+  function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+  function showStatus(el, text) { el.textContent = text; setTimeout(() => { el.textContent = ''; }, 1800); }
+
+  /* ===================== Password-field eye toggles ===================== */
+  document.querySelectorAll('.eye-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const input = $(btn.dataset.target);
+      if (!input) return;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.classList.toggle('on', show);
+    });
+  });
+
+  /* ===================== API Keys ===================== */
+  const API_KEY_FIELDS = {
+    apiClaudeKey: 'claudeKey',
+    apiWeatherKey: 'weatherKey',
+    apiFinnhubKey: 'finnhubKey',
+    apiSupabaseUrl: 'supabaseUrl',
+    apiSupabaseKey: 'supabaseKey',
+    apiOuraToken: 'ouraToken',
+  };
+  function populateApiKeys() {
+    const cfg = loadJSON('settings-api', {});
+    Object.keys(API_KEY_FIELDS).forEach((id) => {
+      const field = API_KEY_FIELDS[id];
+      let val = cfg[field] || '';
+      if (field === 'claudeKey' && !val) {
+        try { val = localStorage.getItem('nova_lite_api_key') || ''; } catch (e) {}
+      }
+      $(id).value = val;
+    });
+  }
+  $('apiSaveBtn').addEventListener('click', () => {
+    const cfg = {};
+    Object.keys(API_KEY_FIELDS).forEach((id) => { cfg[API_KEY_FIELDS[id]] = $(id).value.trim(); });
+    saveJSON('settings-api', cfg);
+    // Mirror the Claude key into the key the rest of the app (Nova/main/health/traumplan) already reads.
+    try { localStorage.setItem('nova_lite_api_key', cfg.claudeKey || ''); } catch (e) {}
+    showStatus($('apiSaveStatus'), 'Gespeichert ✓');
+  });
+  populateApiKeys();
+
+  /* ===================== Darstellung ===================== */
+  function populateDisplay() {
+    const cfg = loadJSON('settings-display', {});
+    $('dispName').value = cfg.dashboardName || '';
+    const lang = cfg.language === 'en' ? 'en' : 'de';
+    $('langSeg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.l === lang));
+  }
+  function applyDisplay(cfg) {
+    const titleEl = document.querySelector('.hub-head .dash-title');
+    if (titleEl) titleEl.textContent = cfg.dashboardName || 'Daniels Dashboard v2';
+    document.documentElement.lang = cfg.language === 'en' ? 'en' : 'de';
+  }
+  $('langSeg').querySelectorAll('button').forEach((b) => {
+    b.addEventListener('click', () => $('langSeg').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)));
+  });
+  $('dispSaveBtn').addEventListener('click', () => {
+    const langBtn = $('langSeg').querySelector('button.on');
+    const cfg = { dashboardName: $('dispName').value.trim(), theme: 'dark', language: langBtn ? langBtn.dataset.l : 'de' };
+    saveJSON('settings-display', cfg);
+    applyDisplay(cfg);
+    showStatus($('dispSaveStatus'), 'Gespeichert ✓');
+  });
+  populateDisplay();
+  applyDisplay(loadJSON('settings-display', {}));
+
+  /* ===================== Daten: Export / Import / Delete ===================== */
+  $('dataExportBtn').addEventListener('click', () => {
+    const dump = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k) dump[k] = localStorage.getItem(k);
+    }
+    const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'dashboard-export-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showStatus($('dataStatus'), 'Export gestartet ✓');
+  });
+  $('dataImportBtn').addEventListener('click', () => $('dataImportFile').click());
+  $('dataImportFile').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const obj = JSON.parse(String(reader.result));
+        Object.keys(obj).forEach((k) => localStorage.setItem(k, obj[k]));
+        showStatus($('dataStatus'), 'Importiert ✓ — Seite wird neu geladen…');
+        setTimeout(() => window.location.reload(), 1200);
+      } catch (err) {
+        showStatus($('dataStatus'), 'Import fehlgeschlagen — ungültige Datei.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+  $('dataDeleteBtn').addEventListener('click', () => {
+    if (!confirm('Wirklich ALLE lokalen Daten löschen? Das kann nicht rückgängig gemacht werden.')) return;
+    localStorage.clear();
+    showStatus($('dataStatus'), 'Gelöscht ✓ — Seite wird neu geladen…');
+    setTimeout(() => window.location.reload(), 1200);
+  });
+
+  /* ===================== Benachrichtigungen ===================== */
+  const NOTIF_TOGGLES = {
+    notifMorning: 'morningBriefing',
+    notifSupplement: 'supplementReminder',
+    notifEvening: 'eveningJournal',
+    notifMit: 'mitReminder',
+  };
+  function populateNotifs() {
+    const cfg = loadJSON('settings-notifications', {});
+    Object.keys(NOTIF_TOGGLES).forEach((id) => {
+      const on = !!cfg[NOTIF_TOGGLES[id]];
+      $(id).classList.toggle('on', on);
+      $(id).setAttribute('aria-checked', String(on));
+    });
+  }
+  function saveNotifs() {
+    const cfg = {};
+    Object.keys(NOTIF_TOGGLES).forEach((id) => { cfg[NOTIF_TOGGLES[id]] = $(id).classList.contains('on'); });
+    saveJSON('settings-notifications', cfg);
+  }
+  Object.keys(NOTIF_TOGGLES).forEach((id) => {
+    $(id).addEventListener('click', () => {
+      const on = !$(id).classList.contains('on');
+      $(id).classList.toggle('on', on);
+      $(id).setAttribute('aria-checked', String(on));
+      saveNotifs();
+    });
+  });
+  $('notifTestBtn').addEventListener('click', async () => {
+    const statusEl = $('notifStatus');
+    if (!('Notification' in window)) { showStatus(statusEl, 'Notifications werden von diesem Browser nicht unterstützt.'); return; }
+    let perm = Notification.permission;
+    if (perm === 'default') perm = await Notification.requestPermission();
+    if (perm !== 'granted') { showStatus(statusEl, 'Berechtigung verweigert.'); return; }
+    new Notification('Daniels Dashboard v2', { body: 'Test-Benachrichtigung — alles funktioniert ✓' });
+    showStatus(statusEl, 'Gesendet ✓');
+  });
+  populateNotifs();
+
+  // Best-effort foreground scheduler — fires only while this tab is open
+  // (no service worker in this app, so background/closed-tab delivery isn't possible).
+  const firedToday = {};
+  function checkScheduledNotifs() {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const cfg = loadJSON('settings-notifications', {});
+    const now = new Date();
+    const hhmm = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    const dayKey = now.toISOString().slice(0, 10);
+    const schedule = [
+      { id: 'morningBriefing', time: '08:00', title: 'Morgen-Briefing', body: 'Dein Tagesüberblick wartet.' },
+      { id: 'mitReminder', time: '10:00', title: 'MIT Reminder', body: 'Hast du deine Most Important Tasks angepackt?' },
+      { id: 'eveningJournal', time: '22:30', title: 'Abendjournal', body: 'Zeit, den Tag im Journal festzuhalten.' },
+    ];
+    schedule.forEach((s) => {
+      const fireKey = dayKey + ':' + s.id;
+      if (cfg[s.id] && hhmm === s.time && !firedToday[fireKey]) {
+        firedToday[fireKey] = true;
+        new Notification(s.title, { body: s.body });
+      }
+    });
+  }
+  setInterval(checkScheduledNotifs, 30 * 1000);
+
+  /* ===================== Supabase sync ===================== */
+  function getDeviceId() {
+    let id;
+    try { id = localStorage.getItem('device-id'); } catch (e) {}
+    if (!id) {
+      id = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : ('dev-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+      try { localStorage.setItem('device-id', id); } catch (e) {}
+    }
+    return id;
+  }
+  getDeviceId();
+
+  const SYNC_PREFIXES = ['tasks-', 'routines:', 'stack:', 'traumplan-', 'journal:'];
+  const SYNC_EXACT_KEYS = ['body-goal', 'goal_streak_v1'];
+
+  function collectSyncData() {
+    const out = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (SYNC_EXACT_KEYS.indexOf(k) !== -1 || SYNC_PREFIXES.some((p) => k.indexOf(p) === 0)) {
+        const raw = localStorage.getItem(k);
+        try { out[k] = JSON.parse(raw); } catch (e) { out[k] = raw; }
+      }
+    }
+    return out;
+  }
+
+  function setSyncDot(offline) {
+    const dot = $('syncDot');
+    if (dot) dot.classList.toggle('offline', !!offline);
+  }
+
+  let supaClient = null;
+  let supaClientUrl = '';
+  function getSupaClient() {
+    const cfg = loadJSON('settings-api', {});
+    if (!cfg.supabaseUrl || !cfg.supabaseKey || !window.supabase) return null;
+    if (!supaClient || supaClientUrl !== cfg.supabaseUrl) {
+      supaClient = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
+      supaClientUrl = cfg.supabaseUrl;
+    }
+    return supaClient;
+  }
+
+  async function syncNow() {
+    if (!navigator.onLine) { setSyncDot(true); return; }
+    const supa = getSupaClient();
+    if (!supa) { setSyncDot(false); return; } // no custom Supabase configured yet — fall back to plain online state
+    try {
+      const { data, error: selErr } = await supa.from('app_state').select('data').eq('key', 'dashboard_sync').maybeSingle();
+      if (selErr) throw selErr;
+      const remote = (data && data.data) || {};
+      const local = collectSyncData();
+      const merged = Object.assign({}, remote, local);
+      Object.keys(merged).forEach((k) => {
+        const v = merged[k];
+        localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+      });
+      const { error: upErr } = await supa.from('app_state').upsert(
+        { key: 'dashboard_sync', data: merged, updated_at: new Date().toISOString(), device_id: getDeviceId() },
+        { onConflict: 'key' }
+      );
+      if (upErr) throw upErr;
+      setSyncDot(false);
+    } catch (e) { setSyncDot(true); }
+  }
+
+  window.addEventListener('online', syncNow);
+  window.addEventListener('offline', () => setSyncDot(true));
+  syncNow();
+  setInterval(syncNow, 30 * 1000);
 })();
 </script>
 </body>

@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(node -e ' *)",
-      "Bash(grep -n \"ADD FORM + SEARCH AUTOCOMPLETE\\\\|function render\\(\\)\\\\|function addItem\\\\|function getStackIssues\\\\|setInterval\\(\\(\\) => {\\\\|render\\(\\);\\\\s*$\\\\|startTicker\\(\\);\\\\|^}\\)\\(\\);\\\\|^</script>\" health.html)"
+      "Bash(grep -n \"ADD FORM + SEARCH AUTOCOMPLETE\\\\|function render\\(\\)\\\\|function addItem\\\\|function getStackIssues\\\\|setInterval\\(\\(\\) => {\\\\|render\\(\\);\\\\s*$\\\\|startTicker\\(\\);\\\\|^}\\)\\(\\);\\\\|^</script>\" health.html)",
+      "Bash(grep -n \"weatherCity\\\\|weatherKey\\\\|WEATHER_KEY\\\\|settingsSave\\\\|whoop-btn\\\\\" id=\\\\\"whAction\\\\\"\\\\|</div>\\\\s*$\" index.html)",
+      "Bash(grep -n \"Weather city\\\\|weatherCity\\\\|weatherKey\\\\|OpenWeatherMap\\\\|settingsSave\\\\|section-divider\\\\|WHOOP</label>\\\\|whAction\\\\|</div>\\\\s*</div>\\\\s*</div>\\\\s*$\\\\|id=\\\\\"settingsBg\\\\\"\\\\|id=\\\\\"briefingBg\\\\\"\" index.html)",
+      "Bash(grep -n \"\\\\$\\('weatherKey'\\)\" index.html)"
     ]
   }
 }
