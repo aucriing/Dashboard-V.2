@@ -166,8 +166,6 @@ body::after {
 }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-/* Hide the shared topbar's water tracker/+1 button on this page only. */
-.topbar-water-wrap { display: none !important; }
 .gear-btn {
   width: 42px; height: 42px; flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
@@ -276,7 +274,7 @@ body::after {
 /* ===== Boot animation ===== */
 .boot-overlay {
   position: fixed; inset: 0; z-index: 9999;
-  background: #000000; color: #00ff41;
+  background: #0a0a0a; color: #f5a623;
   font-family: var(--font-mono);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 22px;
@@ -284,26 +282,31 @@ body::after {
 }
 .boot-overlay.fade-out { opacity: 0; pointer-events: none; }
 .boot-logo {
-  font-size: 60px; line-height: 1; color: #00ff41;
-  text-shadow: 0 0 20px rgba(0,255,65,0.8);
+  font-size: 80px; line-height: 1; color: #f5a623;
+  text-shadow: 0 0 20px rgba(245,166,35,0.8);
 }
-.boot-logo.glitch { animation: glitch 0.2s infinite; }
+.boot-logo img {
+  display: none; width: 80px; height: 80px; object-fit: contain;
+  filter: drop-shadow(0 0 20px rgba(245,166,35,0.8));
+}
+.boot-logo.glitch { animation: glitch 0.15s infinite; }
 @keyframes glitch {
-  0%,100% { transform: translate(0); filter: none; opacity: 1; }
-  20% { transform: translate(-3px,1px); filter: hue-rotate(90deg); opacity: 0.8; }
-  40% { transform: translate(3px,-1px); filter: brightness(2); opacity: 0.9; }
-  60% { transform: translate(-1px,3px); filter: hue-rotate(-90deg); opacity: 0.7; }
-  80% { transform: translate(2px,-2px); filter: brightness(0.5); opacity: 0.85; }
+  0%,100% { transform:translate(0); filter:none; }
+  15% { transform:translate(-3px,2px); filter:hue-rotate(90deg) brightness(1.5); }
+  30% { transform:translate(3px,-2px); filter:hue-rotate(-90deg) brightness(0.7); }
+  45% { transform:translate(-2px,-3px); filter:brightness(2); }
+  60% { transform:translate(2px,3px); filter:hue-rotate(180deg); }
+  75% { transform:translate(-1px,1px); filter:brightness(1.8); }
 }
 .boot-typing {
-  font-family: var(--font-mono); font-size: 14px; color: #00ff41;
-  min-height: 60px; white-space: pre-line; text-align: left;
+  font-family: var(--font-mono); font-size: 14px; color: #f5a623;
+  min-height: 40px; white-space: pre-line; text-align: left;
 }
 .boot-progress {
-  width: 240px; height: 2px; background: rgba(0,255,65,0.15); overflow: hidden;
+  width: 240px; height: 2px; background: rgba(245,166,35,0.15); overflow: hidden;
 }
 .boot-progress-bar {
-  width: 0%; height: 100%; background: #00ff41;
+  width: 0%; height: 100%; background: #f5a623;
   transition: width 2.5s linear;
 }
 
@@ -393,7 +396,10 @@ body::after {
 </head>
 <body>
 <div class="boot-overlay" id="bootOverlay">
-  <div class="boot-logo" id="bootLogo">⬡</div>
+  <div class="boot-logo" id="bootLogo">
+    <img id="bootLogoImg" src="batman-logo.png" alt="">
+    <span id="bootLogoFallback">⬡</span>
+  </div>
   <div class="boot-typing" id="bootTyping"></div>
   <div class="boot-progress"><div class="boot-progress-bar" id="bootProgressBar"></div></div>
 </div>
@@ -406,17 +412,22 @@ body::after {
   sessionStorage.setItem('booted', 'true');
 
   var logo = document.getElementById('bootLogo');
+  var logoImg = document.getElementById('bootLogoImg');
+  var logoFallback = document.getElementById('bootLogoFallback');
   var typingEl = document.getElementById('bootTyping');
   var progressBar = document.getElementById('bootProgressBar');
 
+  logoImg.addEventListener('load', function () { logoImg.style.display = 'block'; logoFallback.style.display = 'none'; });
+  logoImg.addEventListener('error', function () { logoImg.style.display = 'none'; logoFallback.style.display = 'block'; });
+
   logo.classList.add('glitch');
-  setTimeout(function () { logo.classList.remove('glitch'); }, 1500);
+  setTimeout(function () { logo.classList.remove('glitch'); }, 2000);
 
   requestAnimationFrame(function () {
     requestAnimationFrame(function () { progressBar.style.width = '100%'; });
   });
 
-  var lines = ['INITIALIZING SYSTEM...', 'LOADING DANIEL OS v2...', 'ACCESS GRANTED'];
+  var lines = ['INITIALIZING DANIEL OS v2...', 'SYSTEM ONLINE'];
   var lineIndex = 0, charIndex = 0;
   function typeNext() {
     if (lineIndex >= lines.length) return;
