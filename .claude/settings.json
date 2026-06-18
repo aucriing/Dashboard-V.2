@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(grep -n \"ADD FORM + SEARCH AUTOCOMPLETE\\\\|function render\\(\\)\\\\|function addItem\\\\|function getStackIssues\\\\|setInterval\\(\\(\\) => {\\\\|render\\(\\);\\\\s*$\\\\|startTicker\\(\\);\\\\|^}\\)\\(\\);\\\\|^</script>\" health.html)"
     ]
   }
 }
