@@ -11,32 +11,6 @@
 
   // -------- CSS --------
   const css = `
-.topbar {
-  position: sticky; top: 0; z-index: 40;
-  display: flex; justify-content: flex-end; align-items: center;
-  gap: 8px;
-  padding: max(10px, env(safe-area-inset-top)) 14px 8px;
-  background: #0a0a0b;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
-}
-.topbar-finance-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 44px; height: 42px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
-  text-decoration: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s;
-}
-.topbar-finance-btn:hover { background: rgba(255, 255, 255, 0.08); }
-.topbar-finance-icon {
-  font-size: 20px; line-height: 1;
-  filter: grayscale(100%) brightness(1.4);
-  opacity: 0.85;
-}
-
 /* Bottom tab bar — Instagram-style */
 .bottombar {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
@@ -79,9 +53,6 @@ body.has-bottombar {
 }
 
 @media (max-width: 480px) {
-  .topbar { padding-left: 10px; padding-right: 10px; gap: 6px; }
-  .topbar-finance-btn { width: 40px; height: 38px; }
-  .topbar-finance-icon { font-size: 18px; }
   .bottombar-tab-icon { font-size: 22px; }
   .bottombar-tab { font-size: 10px; }
 }
@@ -147,14 +118,6 @@ body.topbar-modal-open {
 `;
 
   // -------- HTML --------
-  const topbarHtml = `
-<header class="topbar" id="topbar" role="navigation" aria-label="Quick actions">
-  <a href="finance.html" class="topbar-finance-btn" id="topbarFinance" aria-label="Finance">
-    <span class="topbar-finance-icon">📊</span>
-  </a>
-</header>
-`;
-
   const bottombarHtml = `
 <nav class="bottombar" id="bottombar" role="navigation" aria-label="Main tabs">
   <a href="index.html" class="bottombar-tab" data-page="main">
@@ -165,46 +128,39 @@ body.topbar-modal-open {
     <span class="bottombar-tab-icon">💊</span>
     <span>Health</span>
   </a>
-  <a href="gym.html" class="bottombar-tab" data-page="fitness">
-    <span class="bottombar-tab-icon">💪</span>
-    <span>Fitness</span>
+  <a href="main.html#aufgaben" class="bottombar-tab" data-page="aufgaben">
+    <span class="bottombar-tab-icon">✅</span>
+    <span>Aufgaben</span>
+  </a>
+  <a href="main.html#future-self" class="bottombar-tab" data-page="future-self">
+    <span class="bottombar-tab-icon">🔮</span>
+    <span>Future Self</span>
   </a>
 </nav>
 `;
 
-  // Pages where we suppress the app chrome: finance has its own internal
-  // 4-tab bottom nav and self-contained back button.
-  function isFinancePage() {
-    const p = (window.location.pathname || '').toLowerCase();
-    return p.endsWith('/finance.html') || p.endsWith('finance.html');
-  }
   // When the water tracker is iframed inside health.html, the embedded
   // page shouldn't render its own chrome again.
   function isEmbedded() {
     try { return window.self !== window.top; } catch (e) { return true; }
   }
   function shouldShowChrome() {
-    return !isFinancePage() && !isEmbedded();
+    return !isEmbedded();
   }
   function currentPageKey() {
     const p = (window.location.pathname || '').toLowerCase();
     if (p.endsWith('health.html')) return 'health';
-    if (p.endsWith('gym.html')) return 'fitness';
     return 'main'; // index.html, /, or anything else falls back to main
   }
 
   function injectStyleAndHTML() {
-    if (document.getElementById('topbar') || document.getElementById('bottombar')) return;
+    if (document.getElementById('bottombar')) return;
     if (!shouldShowChrome()) return;
 
     const style = document.createElement('style');
     style.id = 'topbar-style';
     style.textContent = css;
     document.head.appendChild(style);
-
-    const topWrap = document.createElement('div');
-    topWrap.innerHTML = topbarHtml.trim();
-    document.body.insertBefore(topWrap.firstChild, document.body.firstChild);
 
     const bottomWrap = document.createElement('div');
     bottomWrap.innerHTML = bottombarHtml.trim();

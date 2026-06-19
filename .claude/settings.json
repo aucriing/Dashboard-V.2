@@ -18,7 +18,12 @@
       "Bash(grep -n \"^html, body {\" -A8 finance.html)",
       "Bash(grep -n \"KI Tagesanalyse\\\\|analysisRefreshBtn\\\\|class=\\\\\"section\\\\\">\\\\s*$\" main.html)",
       "Bash(node --check /tmp/_fs_chk.js)",
-      "Bash(awk '$1>1')"
+      "Bash(awk '$1>1')",
+      "Bash(node --check /tmp/_h_chk.js)",
+      "Bash(rm -f /tmp/_h_chk.js)",
+      "Bash(node --check /tmp/_caf_chk.js)",
+      "Bash(node --check /tmp/_caf2.js)",
+      "Bash(node --check /tmp/_idx_chk.js)"
     ],
     "additionalDirectories": [
       "/tmp",
