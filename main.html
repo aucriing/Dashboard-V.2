@@ -719,6 +719,36 @@ body::after {
 .td-analysis-refresh-btn:hover { background: rgba(255,255,255,0.08); }
 .td-analysis-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* ===== Future Self ===== */
+.fs-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(245,158,11,0.5);
+  border-left: 3px solid #f5a623;
+  border-radius: 16px; padding: 18px 20px;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+}
+.fs-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.fs-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+.fs-body {
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+  margin: 14px 0; white-space: pre-line;
+}
+.fs-body strong { color: var(--text-primary); font-weight: 700; }
+.fs-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.fs-time { font-size: 0.7rem; opacity: 0.5; font-family: var(--font-mono); }
+.fs-refresh-btn {
+  margin-left: auto;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-primary);
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  padding: 8px 12px; border-radius: 10px; cursor: pointer;
+  transition: background 0.15s;
+}
+.fs-refresh-btn:hover { background: rgba(255,255,255,0.08); }
+.fs-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* ===== Aufgaben Kanban ===== */
 .kb-tabs { display: inline-flex; border: 1px solid rgba(255,255,255,0.10); border-radius: 11px; overflow: hidden; margin-bottom: 14px; }
 .kb-tab {
@@ -921,29 +951,26 @@ body::after {
 
 /* ===== iPhone 12 Mini and similarly narrow phones ===== */
 @media (max-width: 390px) {
-  body { font-size: 14px; padding: 12px 12px 70px; }
+  body { font-size: 14px; padding: 12px 12px 70px; overflow-x: hidden; }
   .kb-board, .prog-stats-grid { grid-template-columns: 1fr; }
-  .gm-card, .td-card, .prog-card, .kb-col { width: 100%; }
+  .gm-card, .td-card, .prog-card, .kb-col { width: 100%; padding: 12px; }
+  .gm-add, .gm-polish, .kb-add-btn, .td-analysis-refresh-btn, .prog-photo-add-btn,
+  .wj-btn-primary, .wj-btn-secondary, .wj-analyze-btn {
+    min-height: 44px;
+  }
+  .gm-input, .kb-add-input, .wj-textarea, .wj-input, input, select, textarea { font-size: 16px; }
+  .td-modal { max-width: calc(100vw - 24px); }
 }
 
 /* ===== Sync status dot ===== */
-.sync-dot {
-  position: fixed; top: 12px; right: 12px; z-index: 250;
-  width: 9px; height: 9px; border-radius: 50%;
-  background: #6BE3A4; box-shadow: 0 0 6px rgba(107,227,164,0.7);
-}
-.sync-dot.offline {
-  background: #FF5C5C; box-shadow: 0 0 6px rgba(255,92,92,0.7);
-  animation: sync-pulse 1.6s ease-in-out infinite;
-}
-@keyframes sync-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 </style>
 </head>
 <body>
 <div class="page">
 
   <a href="index.html" class="back-link" id="backLink">← Dashboard</a>
-  <span class="sync-dot" id="syncDot" title="Sync status"></span>
+  <div id="sync-dot" style="position:fixed; top:14px; right:14px; width:8px; height:8px; border-radius:50%; background:#22c55e; z-index:999;"></div>
   <h1 class="dash-title">Rowans Dashboard</h1>
 
   <div class="ticker-row">
@@ -1147,6 +1174,19 @@ body::after {
       <div class="td-analysis-footer">
         <span class="td-analysis-time" id="analysisTime"></span>
         <button type="button" class="td-analysis-refresh-btn" id="analysisRefreshBtn">🔄 Neu</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Future Self</div>
+    <div class="fs-card" id="futureSelfCard">
+      <span class="fs-title">🔮 FUTURE SELF</span>
+      <div class="fs-sub">Wer du wirst — täglich reflektiert</div>
+      <div class="fs-body" id="fsBody">Generiere…</div>
+      <div class="fs-footer">
+        <span class="fs-time" id="fsTime"></span>
+        <button type="button" class="fs-refresh-btn" id="fsRefreshBtn">🔄 Neu</button>
       </div>
     </div>
   </div>
@@ -1936,8 +1976,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* ---------- sync status dot ---------- */
   function setSyncDot(state) {
-    const dot = $('syncDot');
-    if (dot) dot.classList.toggle('offline', state === 'red');
+    const dot = document.getElementById('sync-dot');
+    if (!dot) return;
+    dot.style.background = state === 'red' ? '#ef4444' : '#22c55e';
+    dot.style.animation = state === 'red' ? 'pulse 1s infinite' : 'none';
   }
   window.addEventListener('online', () => setSyncDot('green'));
   window.addEventListener('offline', () => setSyncDot('red'));
@@ -2755,6 +2797,121 @@ document.addEventListener('DOMContentLoaded', function () {
   checkTriggers();
   const triggerCheckTimer = setInterval(checkTriggers, 60 * 1000);
   window.addEventListener('pagehide', () => { clearInterval(triggerCheckTimer); });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function activeDateObj() {
+    const now = new Date();
+    if (now.getHours() < 6) { const d = new Date(now); d.setDate(d.getDate() - 1); return d; }
+    return now;
+  }
+  function activeDateKey() {
+    const d = activeDateObj();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+
+  const FS_PROMPT =
+    'Daniel\'s Future Self Profil:\n' +
+    'Was er sich am meisten wünscht: Peace (innere Ruhe)\n' +
+    'Wo er sich am meisten zurück fühlt: Mindset & Career\n' +
+    'Sein Future Self fühlt sich: Focused & In Control\n' +
+    'Was sein Future Self mühelos tut: Take action\n' +
+    'Was er braucht damit es klappt: A clear plan\n' +
+    'Ziele: Strengthen self-discipline | Build strength and muscle | Build a successful business or project | Build stronger relationships\n\n' +
+    'Schreib einen kurzen direkten täglichen Brief von Daniels Future Self an sein heutiges Ich. ' +
+    'Kein Bullshit, keine Floskeln. Sprich ihn direkt an: Du weißt was zu tun ist. ' +
+    '3-4 Sätze. Ehrlich. Motivierend ohne weich zu sein. Sprache: Deutsch.';
+
+  function fsCacheKey() { return 'future-self-' + activeDateKey(); }
+
+  async function callClaudeFutureSelf(apiKey) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: FS_PROMPT }],
+      })
+    });
+    const data = await res.json();
+    return ((data && data.content && data.content[0] && data.content[0].text) || '').trim();
+  }
+
+  function renderFsMarkdown(text) {
+    const escaped = String(text).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    return escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  }
+
+  function typewriterThenRenderFs(el, rawText) {
+    el.innerHTML = '';
+    let i = 0;
+    function step() {
+      if (i >= rawText.length) { el.innerHTML = renderFsMarkdown(rawText); return; }
+      el.textContent += rawText.charAt(i);
+      i++;
+      setTimeout(step, 30);
+    }
+    step();
+  }
+
+  function formatFsTime(ts) {
+    const d = new Date(ts);
+    return 'Brief vom ' + pad2(d.getDate()) + '.' + pad2(d.getMonth() + 1) + '.' + d.getFullYear() +
+      ' um ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  async function generateAndShowFutureSelf(force) {
+    const bodyEl = $('fsBody');
+    const timeEl = $('fsTime');
+    const btn = $('fsRefreshBtn');
+    let apiKey = '';
+    try { apiKey = ((loadJSON('settings-api', {}) || {}).claudeKey || '').trim(); } catch (e) {}
+    if (!apiKey) {
+      bodyEl.textContent = 'Kein API-Key gesetzt — in den Einstellungen hinzufügen.';
+      timeEl.textContent = '';
+      return;
+    }
+    const cacheKey = fsCacheKey();
+    if (force) localStorage.removeItem(cacheKey);
+    if (!force) {
+      const cached = loadJSON(cacheKey, null);
+      if (cached && cached.text) {
+        bodyEl.innerHTML = renderFsMarkdown(cached.text);
+        timeEl.textContent = formatFsTime(cached.generatedAt);
+        return;
+      }
+    }
+    bodyEl.textContent = 'Generiere…';
+    timeEl.textContent = '';
+    btn.disabled = true;
+    try {
+      const text = await callClaudeFutureSelf(apiKey);
+      const generatedAt = Date.now();
+      localStorage.setItem(cacheKey, JSON.stringify({ text, generatedAt }));
+      typewriterThenRenderFs(bodyEl, text);
+      timeEl.textContent = formatFsTime(generatedAt);
+    } catch (e) {
+      bodyEl.textContent = 'Brief momentan nicht verfügbar.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  $('fsRefreshBtn').addEventListener('click', () => generateAndShowFutureSelf(true));
+  generateAndShowFutureSelf(false);
 })();
 </script>
 </body>

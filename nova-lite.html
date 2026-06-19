@@ -33,9 +33,9 @@ window.onunhandledrejection = function (e) {
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root { --accent: #6EE7B7; --accent-2: #67E8F9; --bg: #05060c; --fg: #e9ecf5; --muted: rgba(233,236,245,.55); --line: rgba(255,255,255,.1); }
 html, body { background: var(--bg); }
-body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: var(--fg); min-height: 100vh; }
+body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: var(--fg); min-height: 100vh; overflow-x: hidden; max-width: 100vw; }
 
-.wrap { max-width: 560px; margin: 0 auto; padding: 28px 18px 60px; }
+.wrap { max-width: 560px; margin: 0 auto; padding: max(28px, env(safe-area-inset-top)) 18px calc(60px + env(safe-area-inset-bottom)); }
 .top { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
 .key-toggle { margin-left: auto; border: 1px solid var(--line); background: rgba(255,255,255,.03); border-radius: 10px; padding: 7px 10px; cursor: pointer; font-size: 15px; line-height: 1; opacity: .55; transition: opacity .15s; }
 .key-toggle:hover { opacity: 1; }
@@ -104,24 +104,16 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
 /* iPhone 12 Mini and similarly narrow phones */
 @media (max-width: 390px) {
   body { font-size: 14px; padding-left: 12px; padding-right: 12px; }
+  input, select, textarea { font-size: 16px; }
 }
 
 /* ===== Sync status dot ===== */
-.sync-dot {
-  position: fixed; top: 12px; right: 12px; z-index: 250;
-  width: 9px; height: 9px; border-radius: 50%;
-  background: #6BE3A4; box-shadow: 0 0 6px rgba(107,227,164,0.7);
-}
-.sync-dot.offline {
-  background: #FF5C5C; box-shadow: 0 0 6px rgba(255,92,92,0.7);
-  animation: sync-pulse 1.6s ease-in-out infinite;
-}
-@keyframes sync-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 </style>
 </head>
 <body>
   <a href="index.html" class="back-link" id="backLink">← Dashboard</a>
-  <span class="sync-dot" id="syncDot" title="Sync status"></span>
+  <div id="sync-dot" style="position:fixed; top:14px; right:14px; width:8px; height:8px; border-radius:50%; background:#22c55e; z-index:999;"></div>
   <div class="wrap">
     <div class="top">
       <div class="orb" id="orb"></div>
@@ -274,8 +266,10 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
   });
 
   function setSyncDot(state) {
-    const dot = document.getElementById('syncDot');
-    if (dot) dot.classList.toggle('offline', state === 'red');
+    const dot = document.getElementById('sync-dot');
+    if (!dot) return;
+    dot.style.background = state === 'red' ? '#ef4444' : '#22c55e';
+    dot.style.animation = state === 'red' ? 'pulse 1s infinite' : 'none';
   }
   window.addEventListener('online', () => setSyncDot('green'));
   window.addEventListener('offline', () => setSyncDot('red'));

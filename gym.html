@@ -136,7 +136,7 @@ html, body {
 .po-shell {
   width: 100%; max-width: min(720px, 100vw);
   margin: 0 auto;
-  padding: 24px 16px calc(40px + env(safe-area-inset-bottom));
+  padding: max(24px, env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom));
   box-sizing: border-box;
 }
 /* Defeat the default `min-width: auto` on flex/grid items — without
@@ -1287,6 +1287,8 @@ img, video, canvas, svg { max-width: 100%; }
 /* ===== iPhone 12 Mini and similarly narrow phones ===== */
 @media (max-width: 390px) {
   body { font-size: 14px; padding-left: 12px; padding-right: 12px; }
+  .card { width: 100%; }
+  input, select, textarea { font-size: 16px; }
 }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1294,7 +1296,7 @@ img, video, canvas, svg { max-width: 100%; }
 <body>
 
 <a href="index.html" class="back-link" id="backLink">← Dashboard</a>
-<span class="sync-dot" id="syncDot" title="Sync status"></span>
+<div id="sync-dot" style="position:fixed; top:14px; right:14px; width:8px; height:8px; border-radius:50%; background:#22c55e; z-index:999;"></div>
 
 <div class="po-shell">
   <button class="po-day-pill" type="button" id="dayPill" title="Tap to switch the day filter to today's split">
@@ -3611,16 +3613,7 @@ img, video, canvas, svg { max-width: 100%; }
   @keyframes nvb { 0%,100%{opacity:.3;transform:translateY(0)} 50%{opacity:1;transform:translateY(-3px)} }
 
   /* ===== Sync status dot ===== */
-  .sync-dot {
-    position: fixed; top: 12px; right: 12px; z-index: 250;
-    width: 9px; height: 9px; border-radius: 50%;
-    background: #6BE3A4; box-shadow: 0 0 6px rgba(107,227,164,0.7);
-  }
-  .sync-dot.offline {
-    background: #FF5C5C; box-shadow: 0 0 6px rgba(255,92,92,0.7);
-    animation: sync-pulse 1.6s ease-in-out infinite;
-  }
-  @keyframes sync-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 </style>
 <button id="nvFab" type="button" aria-label="Open Nova coach"><span class="nv-online"></span></button>
 <div id="nvPanel" role="dialog" aria-label="Nova gym coach">
@@ -3750,8 +3743,10 @@ img, video, canvas, svg { max-width: 100%; }
   });
 
   function setSyncDot(state) {
-    const dot = document.getElementById('syncDot');
-    if (dot) dot.classList.toggle('offline', state === 'red');
+    const dot = document.getElementById('sync-dot');
+    if (!dot) return;
+    dot.style.background = state === 'red' ? '#ef4444' : '#22c55e';
+    dot.style.animation = state === 'red' ? 'pulse 1s infinite' : 'none';
   }
   window.addEventListener('online', () => setSyncDot('green'));
   window.addEventListener('offline', () => setSyncDot('red'));

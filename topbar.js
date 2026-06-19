@@ -96,6 +96,8 @@ body.has-bottombar {
   body.has-bottombar {
     padding-bottom: calc(60px + env(safe-area-inset-bottom)) !important;
   }
+  .bottombar-tab-icon { font-size: 22px; }
+  .bottombar-tab { font-size: 0.65rem; }
 }
 
 /* === Global mobile lockdown ===
