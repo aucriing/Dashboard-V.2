@@ -381,7 +381,7 @@ body::after {
     </a>
 
     <!-- Wide tile -->
-    <a class="tile wide" href="main.html#aufgaben" style="--accent:#FF6B6B">
+    <a class="tile wide" href="tasks.html" style="--accent:#FF6B6B">
       <div class="tile-top">
         <span class="tile-num">·02</span>
         <span class="tile-emoji">✅</span>
@@ -440,7 +440,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="main.html#future-self" style="--accent:#f5a623">
+    <a class="tile" href="future-self.html" style="--accent:#f5a623">
       <div class="tile-top">
         <span class="tile-num">·06</span>
         <span class="tile-emoji">🔮</span>
@@ -1287,8 +1287,8 @@ body::after {
     const el = $('futureSelfSub');
     if (!el) return;
     const cached = loadJSON('future-self-' + activeDateKey(), null);
-    if (!cached || !cached.text) { el.textContent = 'Noch kein Brief'; return; }
-    const firstLine = String(cached.text).split('\n')[0].split(/(?<=[.!?])\s/)[0];
+    if (!cached || !cached.brief) { el.textContent = 'Noch kein Brief'; return; }
+    const firstLine = String(cached.brief).split('\n')[0].split(/(?<=[.!?])\s/)[0];
     el.textContent = firstLine;
   }
 

@@ -128,11 +128,11 @@ body.topbar-modal-open {
     <span class="bottombar-tab-icon">💊</span>
     <span>Health</span>
   </a>
-  <a href="main.html#aufgaben" class="bottombar-tab" data-page="aufgaben">
+  <a href="tasks.html" class="bottombar-tab" data-page="aufgaben">
     <span class="bottombar-tab-icon">✅</span>
     <span>Aufgaben</span>
   </a>
-  <a href="main.html#future-self" class="bottombar-tab" data-page="future-self">
+  <a href="future-self.html" class="bottombar-tab" data-page="future-self">
     <span class="bottombar-tab-icon">🔮</span>
     <span>Future Self</span>
   </a>
@@ -150,6 +150,8 @@ body.topbar-modal-open {
   function currentPageKey() {
     const p = (window.location.pathname || '').toLowerCase();
     if (p.endsWith('health.html')) return 'health';
+    if (p.endsWith('tasks.html')) return 'aufgaben';
+    if (p.endsWith('future-self.html')) return 'future-self';
     return 'main'; // index.html, /, or anything else falls back to main
   }
 

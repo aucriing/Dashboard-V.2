@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script>
+window.onerror = function (msg, src, line) {
+  console.error('[Error]', msg, line);
+  return true;
+};
+window.onunhandledrejection = function (e) {
+  console.error('[Promise]', e.reason);
+  e.preventDefault();
+};
+</script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Future Self · Dashboard</title>
+<script src="topbar.js" defer></script>
+<style>
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --success: #6BE3A4;
+  --warning: #F2C063;
+  --danger: #FF6B6B;
+  --border-strong: rgba(255,255,255,0.12);
+  --bg-input: rgba(0,0,0,0.28);
+  --bg-input-focus: rgba(0,0,0,0.36);
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #050506;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(224, 118, 88, 0.16), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(180, 180, 200, 0.06), transparent 50%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: -2;
+  animation: drift 36s ease-in-out infinite alternate;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px;
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes drift {
+  0%   { transform: translate3d(0,0,0); }
+  100% { transform: translate3d(-22px, 14px, 0); }
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.page { max-width: 1100px; margin: 0 auto; }
+
+.back-link {
+  position: fixed; top: 16px; left: 16px; z-index: 100;
+  font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600;
+  letter-spacing: 0.1em; color: #f5a623; opacity: 0.7; cursor: pointer;
+  text-decoration: none; transition: opacity 0.15s;
+}
+.back-link:hover { opacity: 1; }
+
+.dash-title {
+  margin: 40px 0 18px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+@media (max-width: 480px) { .dash-title { font-size: 22px; } }
+
+/* ===== Future Self card ===== */
+.fs-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(245,158,11,0.5);
+  border-left: 3px solid #f5a623;
+  border-radius: 16px; padding: 18px 20px;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+}
+.fs-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.fs-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+.fs-body {
+  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+  margin: 14px 0; white-space: pre-line;
+}
+.fs-body strong { color: var(--text-primary); font-weight: 700; }
+
+.fs-section { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); }
+.fs-section-title {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: #f5a623; margin-bottom: 10px;
+}
+.fs-task-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.fs-task-item {
+  font-size: 13px; color: var(--text-primary); line-height: 1.5;
+  padding: 9px 12px; border-radius: 10px;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06);
+}
+.fs-schedule-body {
+  font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+  white-space: pre-line;
+}
+
+.fs-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08);
+  flex-wrap: wrap;
+}
+.fs-time { font-size: 0.7rem; opacity: 0.5; font-family: var(--font-mono); }
+.fs-footer-btns { display: flex; gap: 8px; margin-left: auto; }
+.fs-refresh-btn, .fs-edit-btn {
+  border: 1px solid rgba(245,158,11,0.45);
+  background: rgba(245,158,11,0.10);
+  color: #f5a623;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 8px 12px; border-radius: 10px; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.fs-refresh-btn:hover, .fs-edit-btn:hover { background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.65); }
+.fs-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== Setup modal ===== */
+.modal-bg {
+  position: fixed; inset: 0; z-index: 200; display: none;
+  align-items: center; justify-content: center; padding: 20px;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.modal-bg.show { display: flex; }
+.modal-box {
+  width: 100%; max-width: 460px; max-height: 88vh; overflow-y: auto;
+  background: #0e0e10; border: 1px solid var(--border-strong);
+  border-radius: 18px; padding: 22px; box-shadow: 0 24px 70px rgba(0,0,0,0.6);
+}
+.modal-box-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.modal-box-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.modal-box-close { border: 0; background: transparent; color: var(--text-tertiary); font-size: 24px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.modal-box-close:hover { color: var(--text-primary); }
+
+.bg-field { margin-bottom: 12px; }
+.bg-field label {
+  display: block; font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px;
+}
+.bg-input {
+  width: 100%; font-size: 13px; padding: 9px 11px; border-radius: 10px;
+  border: 1px solid var(--border-strong); background: var(--bg-input); color: var(--text-primary);
+  font-family: inherit; transition: border-color 0.18s, background 0.18s;
+}
+.bg-input:focus { outline: none; border-color: rgba(255,255,255,0.40); background: var(--bg-input-focus); }
+
+.setup-dots { display: flex; justify-content: center; gap: 6px; margin: 14px 0; }
+.setup-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.18); }
+.setup-dot.on { background: #f5a623; }
+
+.setup-nav-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
+.setup-nav-btns { display: flex; gap: 8px; margin-left: auto; }
+.setup-later-btn {
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; padding: 9px 4px;
+  transition: color 0.15s;
+}
+.setup-later-btn:hover { color: var(--text-secondary); }
+.setup-back-btn {
+  border: 1px solid var(--border-strong); background: transparent; color: var(--text-secondary);
+  font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  padding: 10px 16px; border-radius: 10px; transition: background 0.15s;
+}
+.setup-back-btn:hover { background: rgba(255,255,255,0.05); }
+.setup-next-btn, .setup-save-btn {
+  border: 1px solid rgba(245,158,11,0.45); background: rgba(245,158,11,0.12); color: #f5a623;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+  padding: 10px 18px; border-radius: 10px; transition: background 0.15s, border-color 0.15s;
+}
+.setup-next-btn:hover, .setup-save-btn:hover { background: rgba(245,158,11,0.20); border-color: rgba(245,158,11,0.65); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <a href="index.html" class="back-link" id="backLink">← Dashboard</a>
+  <div id="sync-dot" style="position:fixed; top:14px; right:14px; width:8px; height:8px; border-radius:50%; background:#22c55e; z-index:999;"></div>
+
+  <h1 class="dash-title">Future Self</h1>
+
+  <div class="fs-card" id="futureSelfCard">
+    <span class="fs-title">🔮 FUTURE SELF</span>
+    <div class="fs-sub">Wer du wirst — täglich reflektiert</div>
+    <div class="fs-body" id="fsBody">Generiere…</div>
+
+    <div class="fs-section" id="fsTasksSection" style="display:none;">
+      <div class="fs-section-title">📋 Heute's Aufgaben vom Future Self</div>
+      <ul class="fs-task-list" id="fsTaskList"></ul>
+    </div>
+
+    <div class="fs-section" id="fsScheduleSection" style="display:none;">
+      <div class="fs-section-title">🕐 Empfohlener Tagesablauf</div>
+      <div class="fs-schedule-body" id="fsScheduleBody"></div>
+    </div>
+
+    <div class="fs-footer">
+      <span class="fs-time" id="fsTime"></span>
+      <div class="fs-footer-btns">
+        <button type="button" class="fs-edit-btn" id="fsEditProfileBtn">✏️ Profil bearbeiten</button>
+        <button type="button" class="fs-refresh-btn" id="fsRefreshBtn">🔄 Neu generieren</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-bg" id="setupModalBg">
+  <div class="modal-box setup-modal" role="dialog" aria-label="Future Self Setup">
+    <div class="modal-box-head">
+      <span class="modal-box-title" id="setupModalTitle">Wer bist du in 5 Jahren?</span>
+      <button type="button" class="modal-box-close" id="setupModalClose">×</button>
+    </div>
+
+    <div class="setup-page" data-page="1">
+      <div class="bg-field">
+        <label>Wie fühlt sich dein Future Self?</label>
+        <input type="text" id="spFeels" class="bg-input" placeholder="z. B. ruhig, stark, frei" autocomplete="off">
+      </div>
+      <div class="bg-field">
+        <label>Was tut dein Future Self mühelos?</label>
+        <input type="text" id="spEffortless" class="bg-input" placeholder="z. B. früh aufstehen, Nein sagen" autocomplete="off">
+      </div>
+      <div class="bg-field">
+        <label>Was ist sein größter Unterschied zu dir heute?</label>
+        <input type="text" id="spDifference" class="bg-input" placeholder="…" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="setup-page" data-page="2" style="display:none;">
+      <div class="bg-field">
+        <label>Sport & Körper:</label>
+        <input type="text" id="spSport" class="bg-input" placeholder="z. B. trainiert 5x pro Woche, läuft Marathon" autocomplete="off">
+      </div>
+      <div class="bg-field">
+        <label>Lebensweise:</label>
+        <input type="text" id="spLifestyle" class="bg-input" placeholder="z. B. früh aufstehen, minimalistisch, diszipliniert" autocomplete="off">
+      </div>
+      <div class="bg-field">
+        <label>Prioritäten:</label>
+        <input type="text" id="spPriorities" class="bg-input" placeholder="z. B. Familie, Business, Gesundheit" autocomplete="off">
+      </div>
+      <div class="bg-field">
+        <label>Charakter:</label>
+        <input type="text" id="spCharacter" class="bg-input" placeholder="z. B. ruhig, entschlossen, großzügig" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="setup-page" data-page="3" style="display:none;">
+      <div class="bg-field">
+        <label>Was hat er erreicht? (1)</label>
+        <input type="text" id="spAchievement0" class="bg-input" autocomplete="off">
+      </div>
+      <div class="bg-field">
+        <label>Was hat er erreicht? (2)</label>
+        <input type="text" id="spAchievement1" class="bg-input" autocomplete="off">
+      </div>
+      <div class="bg-field">
+        <label>Was hat er erreicht? (3)</label>
+        <input type="text" id="spAchievement2" class="bg-input" autocomplete="off">
+      </div>
+      <div class="bg-field">
+        <label>Wie viel verdient er?</label>
+        <input type="number" id="spIncome" class="bg-input" placeholder="€ / Monat">
+      </div>
+      <div class="bg-field">
+        <label>Wo lebt er?</label>
+        <input type="text" id="spLocation" class="bg-input" autocomplete="off">
+      </div>
+      <div class="bg-field">
+        <label>Was ist ihm wichtig?</label>
+        <input type="text" id="spImportance" class="bg-input" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="setup-dots" id="setupDots">
+      <span class="setup-dot on" data-page="1"></span>
+      <span class="setup-dot" data-page="2"></span>
+      <span class="setup-dot" data-page="3"></span>
+    </div>
+
+    <div class="setup-nav-row">
+      <button type="button" class="setup-later-btn" id="setupLaterBtn">Später</button>
+      <div class="setup-nav-btns">
+        <button type="button" class="setup-back-btn" id="setupBackBtn" style="display:none;">Zurück</button>
+        <button type="button" class="setup-next-btn" id="setupNextBtn">Weiter</button>
+        <button type="button" class="setup-save-btn" id="setupSaveBtn" style="display:none;">Profil speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function activeDateObj() {
+    const now = new Date();
+    if (now.getHours() < 6) { const d = new Date(now); d.setDate(d.getDate() - 1); return d; }
+    return now;
+  }
+  function activeDateKey() {
+    const d = activeDateObj();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
+
+  /* ---------- Profile ---------- */
+  const PROFILE_KEY = 'future-self-profile';
+  function loadProfile() { return loadJSON(PROFILE_KEY, null); }
+  function saveProfile(p) { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); }
+
+  function collectProfileForm() {
+    return {
+      feels: $('spFeels').value.trim(),
+      effortless: $('spEffortless').value.trim(),
+      difference: $('spDifference').value.trim(),
+      sport: $('spSport').value.trim(),
+      lifestyle: $('spLifestyle').value.trim(),
+      priorities: $('spPriorities').value.trim(),
+      character: $('spCharacter').value.trim(),
+      achievements: [$('spAchievement0').value.trim(), $('spAchievement1').value.trim(), $('spAchievement2').value.trim()],
+      income: $('spIncome').value.trim(),
+      location: $('spLocation').value.trim(),
+      importance: $('spImportance').value.trim(),
+    };
+  }
+
+  function fillProfileForm(p) {
+    $('spFeels').value = p.feels || '';
+    $('spEffortless').value = p.effortless || '';
+    $('spDifference').value = p.difference || '';
+    $('spSport').value = p.sport || '';
+    $('spLifestyle').value = p.lifestyle || '';
+    $('spPriorities').value = p.priorities || '';
+    $('spCharacter').value = p.character || '';
+    const ach = Array.isArray(p.achievements) ? p.achievements : [];
+    $('spAchievement0').value = ach[0] || '';
+    $('spAchievement1').value = ach[1] || '';
+    $('spAchievement2').value = ach[2] || '';
+    $('spIncome').value = p.income || '';
+    $('spLocation').value = p.location || '';
+    $('spImportance').value = p.importance || '';
+  }
+
+  function buildProfileText(p) {
+    const lines = [];
+    if (p.feels) lines.push('Future Self fühlt sich: ' + p.feels);
+    if (p.effortless) lines.push('Future Self tut mühelos: ' + p.effortless);
+    if (p.difference) lines.push('Größter Unterschied zu heute: ' + p.difference);
+    if (p.sport) lines.push('Sport & Körper: ' + p.sport);
+    if (p.lifestyle) lines.push('Lebensweise: ' + p.lifestyle);
+    if (p.priorities) lines.push('Prioritäten: ' + p.priorities);
+    if (p.character) lines.push('Charakter: ' + p.character);
+    const ach = (Array.isArray(p.achievements) ? p.achievements : []).filter(Boolean);
+    if (ach.length) lines.push('Erreicht: ' + ach.join(' | '));
+    if (p.income) lines.push('Verdienst: ' + p.income + ' €/Monat');
+    if (p.location) lines.push('Wohnort: ' + p.location);
+    if (p.importance) lines.push('Wichtig: ' + p.importance);
+    return lines.join('\n');
+  }
+
+  /* ---------- Setup modal (3-page wizard) ---------- */
+  const setupModalBg = $('setupModalBg');
+  let setupPage = 1;
+  const SETUP_TITLES = { 1: 'Wer bist du in 5 Jahren?', 2: 'Lifestyle', 3: 'Ziele' };
+
+  function showSetupPage(n) {
+    setupPage = n;
+    document.querySelectorAll('.setup-page').forEach((el) => {
+      el.style.display = Number(el.dataset.page) === n ? '' : 'none';
+    });
+    document.querySelectorAll('.setup-dot').forEach((el) => {
+      el.classList.toggle('on', Number(el.dataset.page) === n);
+    });
+    $('setupModalTitle').textContent = SETUP_TITLES[n];
+    $('setupBackBtn').style.display = n > 1 ? '' : 'none';
+    $('setupNextBtn').style.display = n < 3 ? '' : 'none';
+    $('setupSaveBtn').style.display = n === 3 ? '' : 'none';
+  }
+
+  function openSetupModal() {
+    const existing = loadProfile();
+    if (existing) fillProfileForm(existing);
+    showSetupPage(1);
+    setupModalBg.classList.add('show');
+  }
+  function closeSetupModal() { setupModalBg.classList.remove('show'); }
+
+  $('setupNextBtn').addEventListener('click', () => { if (setupPage < 3) showSetupPage(setupPage + 1); });
+  $('setupBackBtn').addEventListener('click', () => { if (setupPage > 1) showSetupPage(setupPage - 1); });
+  $('setupLaterBtn').addEventListener('click', closeSetupModal);
+  $('setupModalClose').addEventListener('click', closeSetupModal);
+  setupModalBg.addEventListener('click', (e) => { if (e.target === setupModalBg) closeSetupModal(); });
+
+  $('setupSaveBtn').addEventListener('click', () => {
+    saveProfile(collectProfileForm());
+    closeSetupModal();
+    generateAndShowFutureSelf(true);
+  });
+  $('fsEditProfileBtn').addEventListener('click', openSetupModal);
+
+  /* ---------- Daily brief ---------- */
+  function fsCacheKey() { return 'future-self-' + activeDateKey(); }
+
+  function buildFsPrompt(profile) {
+    return 'Daniels Future Self Profil:\n' + buildProfileText(profile) + '\n\n' +
+      'Schreib einen kurzen direkten Brief von Daniels Future Self. ' +
+      '3-4 Sätze. Dann: 3 konkrete Aufgaben für heute die ihn seinem Future Self näherbringen. ' +
+      'Dann: grober Tagesablauf (Morgen/Mittag/Abend) passend zu seinem Future Self Profil. ' +
+      'Deutsch. Direkt. Kein Smalltalk.\n\n' +
+      'Antworte EXAKT in diesem Format, ohne zusätzliche Überschriften, Sternchen oder Erklärungen:\n' +
+      'BRIEF:\n<3-4 Sätze Brief>\n\n' +
+      'AUFGABEN:\n1. <Aufgabe 1>\n2. <Aufgabe 2>\n3. <Aufgabe 3>\n\n' +
+      'TAGESABLAUF:\nMorgen: <...>\nMittag: <...>\nAbend: <...>';
+  }
+
+  async function callClaudeFutureSelf(apiKey, prompt) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: prompt }],
+      })
+    });
+    const data = await res.json();
+    return ((data && data.content && data.content[0] && data.content[0].text) || '').trim();
+  }
+
+  function parseFsResponse(raw) {
+    const taskIdx = raw.indexOf('AUFGABEN:');
+    const schedIdx = raw.indexOf('TAGESABLAUF:');
+    let brief = raw, tasksRaw = '', scheduleRaw = '';
+    if (taskIdx !== -1) {
+      brief = raw.slice(0, taskIdx);
+      if (schedIdx !== -1 && schedIdx > taskIdx) {
+        tasksRaw = raw.slice(taskIdx + 'AUFGABEN:'.length, schedIdx);
+        scheduleRaw = raw.slice(schedIdx + 'TAGESABLAUF:'.length);
+      } else {
+        tasksRaw = raw.slice(taskIdx + 'AUFGABEN:'.length);
+      }
+    } else if (schedIdx !== -1) {
+      brief = raw.slice(0, schedIdx);
+      scheduleRaw = raw.slice(schedIdx + 'TAGESABLAUF:'.length);
+    }
+    brief = brief.replace(/^BRIEF:\s*/i, '').trim();
+    const tasks = tasksRaw.split('\n').map((l) => l.replace(/^\s*[-•\d.)]+\s*/, '').trim()).filter(Boolean);
+    const schedule = scheduleRaw.trim();
+    return { brief, tasks, schedule };
+  }
+
+  function renderFsMarkdown(text) {
+    const escaped = String(text).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    return escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  }
+
+  function typewriterThenRenderFs(el, rawText) {
+    el.innerHTML = '';
+    let i = 0;
+    function step() {
+      if (i >= rawText.length) { el.innerHTML = renderFsMarkdown(rawText); return; }
+      el.textContent += rawText.charAt(i);
+      i++;
+      setTimeout(step, 30);
+    }
+    step();
+  }
+
+  function formatFsTime(ts) {
+    const d = new Date(ts);
+    return 'Brief vom ' + pad2(d.getDate()) + '.' + pad2(d.getMonth() + 1) + '.' + d.getFullYear() +
+      ' um ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  function renderFsResult(result, animate) {
+    const bodyEl = $('fsBody');
+    if (animate) typewriterThenRenderFs(bodyEl, result.brief);
+    else bodyEl.innerHTML = renderFsMarkdown(result.brief);
+
+    const tasksSection = $('fsTasksSection');
+    const taskList = $('fsTaskList');
+    taskList.innerHTML = '';
+    if (result.tasks && result.tasks.length) {
+      result.tasks.forEach((t) => {
+        const li = document.createElement('li');
+        li.className = 'fs-task-item';
+        li.textContent = t;
+        taskList.appendChild(li);
+      });
+      tasksSection.style.display = '';
+    } else {
+      tasksSection.style.display = 'none';
+    }
+
+    const scheduleSection = $('fsScheduleSection');
+    if (result.schedule) {
+      $('fsScheduleBody').textContent = result.schedule;
+      scheduleSection.style.display = '';
+    } else {
+      scheduleSection.style.display = 'none';
+    }
+  }
+
+  async function generateAndShowFutureSelf(force) {
+    const bodyEl = $('fsBody');
+    const timeEl = $('fsTime');
+    const btn = $('fsRefreshBtn');
+
+    const profile = loadProfile();
+    if (!profile) {
+      bodyEl.textContent = 'Noch kein Future Self Profil — bitte zuerst einrichten.';
+      timeEl.textContent = '';
+      $('fsTasksSection').style.display = 'none';
+      $('fsScheduleSection').style.display = 'none';
+      return;
+    }
+
+    let apiKey = '';
+    try { apiKey = ((loadJSON('settings-api', {}) || {}).claudeKey || '').trim(); } catch (e) {}
+    if (!apiKey) {
+      bodyEl.textContent = 'Kein API-Key gesetzt — in den Einstellungen hinzufügen.';
+      timeEl.textContent = '';
+      $('fsTasksSection').style.display = 'none';
+      $('fsScheduleSection').style.display = 'none';
+      return;
+    }
+
+    const cacheKey = fsCacheKey();
+    if (force) localStorage.removeItem(cacheKey);
+    if (!force) {
+      const cached = loadJSON(cacheKey, null);
+      if (cached && cached.brief) {
+        renderFsResult(cached, false);
+        timeEl.textContent = formatFsTime(cached.generatedAt);
+        return;
+      }
+    }
+
+    bodyEl.textContent = 'Generiere…';
+    timeEl.textContent = '';
+    $('fsTasksSection').style.display = 'none';
+    $('fsScheduleSection').style.display = 'none';
+    btn.disabled = true;
+    try {
+      const raw = await callClaudeFutureSelf(apiKey, buildFsPrompt(profile));
+      const result = parseFsResponse(raw);
+      const generatedAt = Date.now();
+      localStorage.setItem(cacheKey, JSON.stringify(Object.assign({ generatedAt }, result)));
+      renderFsResult(result, true);
+      timeEl.textContent = formatFsTime(generatedAt);
+    } catch (e) {
+      bodyEl.textContent = 'Brief momentan nicht verfügbar.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  $('fsRefreshBtn').addEventListener('click', () => generateAndShowFutureSelf(true));
+
+  if (!loadProfile()) openSetupModal();
+  generateAndShowFutureSelf(false);
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  function goBackToDashboard() {
+    document.body.style.transition = 'opacity 150ms ease';
+    document.body.style.opacity = '0';
+    setTimeout(() => { window.location.href = 'index.html'; }, 150);
+  }
+  const backLinkEl = document.getElementById('backLink');
+  if (backLinkEl) backLinkEl.addEventListener('click', (e) => { e.preventDefault(); goBackToDashboard(); });
+
+  function setSyncDot(state) {
+    const dot = document.getElementById('sync-dot');
+    if (!dot) return;
+    dot.style.background = state === 'red' ? '#ef4444' : '#22c55e';
+    dot.style.animation = state === 'red' ? 'pulse 1s infinite' : 'none';
+  }
+  window.addEventListener('online', () => setSyncDot('green'));
+  window.addEventListener('offline', () => setSyncDot('red'));
+  setSyncDot(navigator.onLine ? 'green' : 'red');
+})();
+</script>
+</body>
+</html>

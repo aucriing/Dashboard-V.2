@@ -536,18 +536,15 @@ body::after {
 
 .gm-add {
   padding: 11px 20px;
-  border: 0; border-radius: 12px;
-  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
-  color: #0A0A0B;
-  font-family: inherit; font-size: 13px; font-weight: 700;
+  border: 1px solid rgba(245,158,11,0.45); border-radius: 12px;
+  background: rgba(245,158,11,0.10);
+  color: #f5a623;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
   cursor: pointer;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.9),
-    0 2px 8px rgba(0,0,0,0.35),
-    0 8px 22px rgba(0,0,0,0.25);
-  transition: transform 0.1s, filter 0.15s;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
 }
-.gm-add:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.gm-add:hover { background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.65); transform: translateY(-1px); }
 .gm-add:active { transform: translateY(0); }
 
 .gm-polish {
@@ -625,14 +622,15 @@ body::after {
 .td-tag.td-tag-account    { background: rgba(242,192,99,0.15);  color: #F2C063; }
 
 .td-add-routine-btn {
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
-  color: var(--text-primary);
-  font-family: inherit; font-size: 12px; font-weight: 700;
+  border: 1px solid rgba(245,158,11,0.45);
+  background: rgba(245,158,11,0.10);
+  color: #f5a623;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
   padding: 7px 12px; border-radius: 10px; cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s;
 }
-.td-add-routine-btn:hover { background: rgba(255,255,255,0.08); }
+.td-add-routine-btn:hover { background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.65); }
 .td-add-routine-row { display: flex; gap: 8px; margin-bottom: 12px; }
 .td-add-routine-row input {
   flex: 1; min-width: 0; padding: 9px 12px;
@@ -676,127 +674,6 @@ body::after {
 .td-analysis-refresh-btn:hover { background: rgba(255,255,255,0.08); }
 .td-analysis-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ===== Future Self ===== */
-.fs-card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(245,158,11,0.5);
-  border-left: 3px solid #f5a623;
-  border-radius: 16px; padding: 18px 20px;
-  backdrop-filter: blur(24px) saturate(1.2);
-  -webkit-backdrop-filter: blur(24px) saturate(1.2);
-}
-.fs-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-.fs-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
-.fs-body {
-  font-size: 13px; color: var(--text-secondary); line-height: 1.6;
-  margin: 14px 0; white-space: pre-line;
-}
-.fs-body strong { color: var(--text-primary); font-weight: 700; }
-.fs-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.fs-time { font-size: 0.7rem; opacity: 0.5; font-family: var(--font-mono); }
-.fs-refresh-btn {
-  margin-left: auto;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
-  color: var(--text-primary);
-  font-family: inherit; font-size: 12px; font-weight: 700;
-  padding: 8px 12px; border-radius: 10px; cursor: pointer;
-  transition: background 0.15s;
-}
-.fs-refresh-btn:hover { background: rgba(255,255,255,0.08); }
-.fs-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* ===== Aufgaben Kanban ===== */
-.kb-tabs { display: inline-flex; border: 1px solid rgba(255,255,255,0.10); border-radius: 11px; overflow: hidden; margin-bottom: 14px; }
-.kb-tab {
-  border: 0; background: transparent; color: var(--text-tertiary);
-  font-family: inherit; font-size: 12px; font-weight: 700;
-  letter-spacing: 0.06em; text-transform: uppercase;
-  padding: 10px 18px; cursor: pointer; transition: background 0.15s, color 0.15s;
-}
-.kb-tab.on { background: rgba(255,255,255,0.12); color: var(--text-primary); }
-.kb-tab:hover:not(.on) { color: var(--text-secondary); }
-
-.kb-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-.kb-col {
-  display: flex; flex-direction: column;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 16px; padding: 14px;
-  backdrop-filter: blur(24px) saturate(1.2);
-  -webkit-backdrop-filter: blur(24px) saturate(1.2);
-}
-.kb-col-head {
-  display: flex; align-items: center; gap: 8px;
-  margin-bottom: 12px; padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-}
-.kb-col-icon { font-size: 16px; }
-.kb-col-title { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
-.kb-col-mit        .kb-col-title { color: var(--danger); }
-.kb-col-8020       .kb-col-title { color: var(--warning); }
-.kb-col-delegieren .kb-col-title { color: var(--success); }
-.kb-col-eliminieren .kb-col-title { color: var(--text-tertiary); }
-
-.kb-cards { display: flex; flex-direction: column; gap: 8px; min-height: 8px; }
-
-.kb-card {
-  position: relative;
-  display: flex; align-items: flex-start; gap: 8px;
-  background: rgba(255,255,255,0.035);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 10px;
-  padding: 10px 30px 10px 10px;
-  animation: kb-slide-in 0.22s ease-out;
-}
-.kb-card.kb-card-exit { animation: kb-slide-out 0.22s ease-in forwards; }
-@keyframes kb-slide-in {
-  from { transform: translateY(14px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
-}
-@keyframes kb-slide-out {
-  from { transform: translateX(0); opacity: 1; }
-  to   { transform: translateX(30px); opacity: 0; }
-}
-.kb-card.kb-card-done { opacity: 0.4; }
-.kb-card.kb-card-done .kb-card-text { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
-.kb-card-body { flex: 1; min-width: 0; }
-.kb-card-text { font-size: 13px; color: var(--text-primary); }
-.kb-card-account {
-  font-size: 11px; color: var(--text-tertiary); margin: 4px -3px -2px;
-  cursor: text; outline: none; border-radius: 4px; padding: 1px 3px;
-}
-.kb-card-account:empty::before { content: attr(data-placeholder); opacity: 0.6; }
-.kb-card-account[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.25); }
-.kb-card-del {
-  position: absolute; top: 8px; right: 8px;
-  border: 0; background: transparent; color: var(--text-tertiary);
-  font-size: 13px; cursor: pointer; padding: 2px 5px; border-radius: 6px;
-  opacity: 0; transition: opacity 0.15s, color 0.15s;
-}
-.kb-card:hover .kb-card-del { opacity: 1; }
-.kb-card-del:hover { color: var(--danger); }
-
-.kb-add-row { margin-top: 4px; }
-.kb-add-input {
-  width: 100%; padding: 9px 11px;
-  border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
-  background: rgba(0,0,0,0.28); color: var(--text-primary);
-  font-family: inherit; font-size: 13px; outline: none;
-}
-.kb-add-input:focus { border-color: rgba(255,255,255,0.28); }
-.kb-add-btn {
-  width: 100%; margin-top: 8px; padding: 9px;
-  border: 1px dashed rgba(255,255,255,0.16); border-radius: 10px;
-  background: transparent; color: var(--text-tertiary);
-  font-family: inherit; font-size: 11px; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  cursor: pointer; transition: color 0.2s, border-color 0.2s;
-}
-.kb-add-btn:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.30); }
-
-@media (max-width: 720px) { .kb-board { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 480px) { .kb-board { grid-template-columns: 1fr; } }
 
 /* ===== Tiny modal (Tagesanalyse) ===== */
 .td-modal-bg {
@@ -854,13 +731,12 @@ body::after {
 /* ===== iPhone 12 Mini and similarly narrow phones ===== */
 @media (max-width: 390px) {
   body { font-size: 14px; padding: 12px 12px 70px; overflow-x: hidden; }
-  .kb-board { grid-template-columns: 1fr; }
-  .gm-card, .td-card, .kb-col { width: 100%; padding: 12px; }
-  .gm-add, .gm-polish, .kb-add-btn, .td-analysis-refresh-btn,
+  .gm-card, .td-card { width: 100%; padding: 12px; }
+  .gm-add, .gm-polish, .td-analysis-refresh-btn,
   .wj-btn-primary, .wj-btn-secondary, .wj-analyze-btn {
     min-height: 44px;
   }
-  .gm-input, .kb-add-input, .wj-textarea, .wj-input, input, select, textarea { font-size: 16px; }
+  .gm-input, .wj-textarea, .wj-input, input, select, textarea { font-size: 16px; }
   .td-modal { max-width: calc(100vw - 24px); }
 }
 
@@ -978,66 +854,6 @@ body::after {
     </div>
   </div>
 
-  <div class="section" id="aufgaben">
-    <div class="section-title">Aufgaben</div>
-
-    <div class="kb-tabs" id="kbTabs">
-      <button type="button" class="kb-tab on" data-tab="today">Heute</button>
-      <button type="button" class="kb-tab" data-tab="tomorrow">Morgen</button>
-      <button type="button" class="kb-tab" data-tab="all">Alle</button>
-    </div>
-
-    <div class="kb-board">
-      <div class="kb-col">
-        <div class="kb-col-head kb-col-mit">
-          <span class="kb-col-icon">🎯</span>
-          <span class="kb-col-title">MIT</span>
-        </div>
-        <div class="kb-cards" id="kbCards-mit"></div>
-        <div class="kb-add-row" id="kbAddRow-mit" style="display:none;">
-          <input type="text" class="kb-add-input" id="kbAddInput-mit" placeholder="Neue Aufgabe…" autocomplete="off">
-        </div>
-        <button type="button" class="kb-add-btn" data-cat="mit">+ Hinzufügen</button>
-      </div>
-
-      <div class="kb-col">
-        <div class="kb-col-head kb-col-8020">
-          <span class="kb-col-icon">⚡</span>
-          <span class="kb-col-title">80-20</span>
-        </div>
-        <div class="kb-cards" id="kbCards-8020"></div>
-        <div class="kb-add-row" id="kbAddRow-8020" style="display:none;">
-          <input type="text" class="kb-add-input" id="kbAddInput-8020" placeholder="Neue Aufgabe…" autocomplete="off">
-        </div>
-        <button type="button" class="kb-add-btn" data-cat="8020">+ Hinzufügen</button>
-      </div>
-
-      <div class="kb-col">
-        <div class="kb-col-head kb-col-delegieren">
-          <span class="kb-col-icon">🤝</span>
-          <span class="kb-col-title">Delegieren</span>
-        </div>
-        <div class="kb-cards" id="kbCards-delegieren"></div>
-        <div class="kb-add-row" id="kbAddRow-delegieren" style="display:none;">
-          <input type="text" class="kb-add-input" id="kbAddInput-delegieren" placeholder="Neue Aufgabe…" autocomplete="off">
-        </div>
-        <button type="button" class="kb-add-btn" data-cat="delegieren">+ Hinzufügen</button>
-      </div>
-
-      <div class="kb-col">
-        <div class="kb-col-head kb-col-eliminieren">
-          <span class="kb-col-icon">🗑️</span>
-          <span class="kb-col-title">Eliminieren</span>
-        </div>
-        <div class="kb-cards" id="kbCards-eliminieren"></div>
-        <div class="kb-add-row" id="kbAddRow-eliminieren" style="display:none;">
-          <input type="text" class="kb-add-input" id="kbAddInput-eliminieren" placeholder="Neue Aufgabe…" autocomplete="off">
-        </div>
-        <button type="button" class="kb-add-btn" data-cat="eliminieren">+ Hinzufügen</button>
-      </div>
-    </div>
-  </div>
-
   <div class="section">
     <div class="section-title">KI Tagesanalyse</div>
     <div class="td-analysis-card" id="analysisCard">
@@ -1047,19 +863,6 @@ body::after {
       <div class="td-analysis-footer">
         <span class="td-analysis-time" id="analysisTime"></span>
         <button type="button" class="td-analysis-refresh-btn" id="analysisRefreshBtn">🔄 Neu</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="section" id="future-self">
-    <div class="section-title">Future Self</div>
-    <div class="fs-card" id="futureSelfCard">
-      <span class="fs-title">🔮 FUTURE SELF</span>
-      <div class="fs-sub">Wer du wirst — täglich reflektiert</div>
-      <div class="fs-body" id="fsBody">Generiere…</div>
-      <div class="fs-footer">
-        <span class="fs-time" id="fsTime"></span>
-        <button type="button" class="fs-refresh-btn" id="fsRefreshBtn">🔄 Neu</button>
       </div>
     </div>
   </div>
@@ -2055,155 +1858,6 @@ document.addEventListener('DOMContentLoaded', function () {
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
-
-  function pad2(n) { return String(n).padStart(2, '0'); }
-  function dateToKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
-  function activeDateKey() {
-    const now = new Date();
-    if (now.getHours() < 6) { const d = new Date(now); d.setDate(d.getDate() - 1); return dateToKey(d); }
-    return dateToKey(now);
-  }
-  function tomorrowDateKey() {
-    const now = new Date();
-    const d = new Date(now);
-    if (now.getHours() >= 6) d.setDate(d.getDate() + 1);
-    return dateToKey(d);
-  }
-
-  const CATEGORIES = ['mit', '8020', 'delegieren', 'eliminieren'];
-  let currentTab = 'today';
-
-  function bucketKey(tab) {
-    if (tab === 'today') return 'tasks-' + activeDateKey();
-    if (tab === 'tomorrow') return 'tasks-' + tomorrowDateKey();
-    return 'tasks-all';
-  }
-  function loadBucket(tab) {
-    try {
-      const list = JSON.parse(localStorage.getItem(bucketKey(tab)));
-      return Array.isArray(list) ? list : [];
-    } catch (e) { return []; }
-  }
-  function saveBucket(tab, list) { localStorage.setItem(bucketKey(tab), JSON.stringify(list)); }
-
-  function buildCard(task, tab) {
-    const card = document.createElement('div');
-    card.className = 'kb-card' + (task.done ? ' kb-card-done' : '');
-    card.dataset.id = task.id;
-
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.className = 'gm-check';
-    cb.checked = !!task.done;
-    cb.addEventListener('change', () => {
-      const list = loadBucket(tab);
-      const t = list.find((x) => x.id === task.id);
-      if (t) t.done = cb.checked;
-      saveBucket(tab, list);
-      card.classList.toggle('kb-card-done', cb.checked);
-    });
-    card.appendChild(cb);
-
-    const body = document.createElement('div');
-    body.className = 'kb-card-body';
-
-    const text = document.createElement('div');
-    text.className = 'kb-card-text';
-    text.textContent = task.text;
-    body.appendChild(text);
-
-    const account = document.createElement('div');
-    account.className = 'kb-card-account';
-    account.contentEditable = 'true';
-    account.dataset.placeholder = '+ Account';
-    account.textContent = task.account || '';
-    function commitAccount() {
-      const next = account.textContent.trim();
-      const list = loadBucket(tab);
-      const t = list.find((x) => x.id === task.id);
-      if (t) t.account = next;
-      saveBucket(tab, list);
-    }
-    account.addEventListener('blur', commitAccount);
-    account.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); account.blur(); }
-      else if (e.key === 'Escape') { e.preventDefault(); account.textContent = task.account || ''; account.blur(); }
-    });
-    body.appendChild(account);
-    card.appendChild(body);
-
-    const del = document.createElement('button');
-    del.type = 'button';
-    del.className = 'kb-card-del';
-    del.setAttribute('aria-label', 'Löschen');
-    del.textContent = '✕';
-    del.addEventListener('click', () => {
-      card.classList.add('kb-card-exit');
-      card.addEventListener('animationend', () => {
-        const list = loadBucket(tab);
-        const idx = list.findIndex((x) => x.id === task.id);
-        if (idx > -1) { list.splice(idx, 1); saveBucket(tab, list); }
-        card.remove();
-      }, { once: true });
-    });
-    card.appendChild(del);
-
-    return card;
-  }
-
-  function renderColumn(cat) {
-    const list = loadBucket(currentTab).filter((t) => t && t.category === cat);
-    const el = $('kbCards-' + cat);
-    el.innerHTML = '';
-    list.forEach((task) => el.appendChild(buildCard(task, currentTab)));
-  }
-  function renderBoard() { CATEGORIES.forEach(renderColumn); }
-
-  function addTask(cat, text) {
-    const list = loadBucket(currentTab);
-    list.push({ id: 'k' + Date.now() + Math.random().toString(36).slice(2, 7), text, category: cat, account: '', done: false });
-    saveBucket(currentTab, list);
-    renderColumn(cat);
-  }
-
-  CATEGORIES.forEach((cat) => {
-    const addBtn = document.querySelector('.kb-add-btn[data-cat="' + cat + '"]');
-    const row = $('kbAddRow-' + cat);
-    const input = $('kbAddInput-' + cat);
-    function closeRow() { row.style.display = 'none'; addBtn.style.display = 'block'; }
-    addBtn.addEventListener('click', () => {
-      addBtn.style.display = 'none';
-      row.style.display = 'block';
-      input.value = '';
-      input.focus();
-    });
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const text = input.value.trim();
-        if (text) { addTask(cat, text); input.value = ''; }
-      } else if (e.key === 'Escape') {
-        closeRow();
-      }
-    });
-    input.addEventListener('blur', () => { if (!input.value.trim()) closeRow(); });
-  });
-
-  document.querySelectorAll('.kb-tab').forEach((tab) => {
-    tab.addEventListener('click', () => {
-      currentTab = tab.dataset.tab;
-      document.querySelectorAll('.kb-tab').forEach((t) => t.classList.toggle('on', t === tab));
-      renderBoard();
-    });
-  });
-
-  renderBoard();
-})();
-</script>
-
-<script>
-(function () {
-  'use strict';
-  const $ = (id) => document.getElementById(id);
   function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
 
   function pad2(n) { return String(n).padStart(2, '0'); }
@@ -2366,119 +2020,5 @@ document.addEventListener('DOMContentLoaded', function () {
 })();
 </script>
 
-<script>
-(function () {
-  'use strict';
-  const $ = (id) => document.getElementById(id);
-  function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
-
-  function pad2(n) { return String(n).padStart(2, '0'); }
-  function activeDateObj() {
-    const now = new Date();
-    if (now.getHours() < 6) { const d = new Date(now); d.setDate(d.getDate() - 1); return d; }
-    return now;
-  }
-  function activeDateKey() {
-    const d = activeDateObj();
-    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
-  }
-
-  const FS_PROMPT =
-    'Daniel\'s Future Self Profil:\n' +
-    'Was er sich am meisten wünscht: Peace (innere Ruhe)\n' +
-    'Wo er sich am meisten zurück fühlt: Mindset & Career\n' +
-    'Sein Future Self fühlt sich: Focused & In Control\n' +
-    'Was sein Future Self mühelos tut: Take action\n' +
-    'Was er braucht damit es klappt: A clear plan\n' +
-    'Ziele: Strengthen self-discipline | Build strength and muscle | Build a successful business or project | Build stronger relationships\n\n' +
-    'Schreib einen kurzen direkten täglichen Brief von Daniels Future Self an sein heutiges Ich. ' +
-    'Kein Bullshit, keine Floskeln. Sprich ihn direkt an: Du weißt was zu tun ist. ' +
-    '3-4 Sätze. Ehrlich. Motivierend ohne weich zu sein. Sprache: Deutsch.';
-
-  function fsCacheKey() { return 'future-self-' + activeDateKey(); }
-
-  async function callClaudeFutureSelf(apiKey) {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 300,
-        messages: [{ role: 'user', content: FS_PROMPT }],
-      })
-    });
-    const data = await res.json();
-    return ((data && data.content && data.content[0] && data.content[0].text) || '').trim();
-  }
-
-  function renderFsMarkdown(text) {
-    const escaped = String(text).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-    return escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  }
-
-  function typewriterThenRenderFs(el, rawText) {
-    el.innerHTML = '';
-    let i = 0;
-    function step() {
-      if (i >= rawText.length) { el.innerHTML = renderFsMarkdown(rawText); return; }
-      el.textContent += rawText.charAt(i);
-      i++;
-      setTimeout(step, 30);
-    }
-    step();
-  }
-
-  function formatFsTime(ts) {
-    const d = new Date(ts);
-    return 'Brief vom ' + pad2(d.getDate()) + '.' + pad2(d.getMonth() + 1) + '.' + d.getFullYear() +
-      ' um ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
-  }
-
-  async function generateAndShowFutureSelf(force) {
-    const bodyEl = $('fsBody');
-    const timeEl = $('fsTime');
-    const btn = $('fsRefreshBtn');
-    let apiKey = '';
-    try { apiKey = ((loadJSON('settings-api', {}) || {}).claudeKey || '').trim(); } catch (e) {}
-    if (!apiKey) {
-      bodyEl.textContent = 'Kein API-Key gesetzt — in den Einstellungen hinzufügen.';
-      timeEl.textContent = '';
-      return;
-    }
-    const cacheKey = fsCacheKey();
-    if (force) localStorage.removeItem(cacheKey);
-    if (!force) {
-      const cached = loadJSON(cacheKey, null);
-      if (cached && cached.text) {
-        bodyEl.innerHTML = renderFsMarkdown(cached.text);
-        timeEl.textContent = formatFsTime(cached.generatedAt);
-        return;
-      }
-    }
-    bodyEl.textContent = 'Generiere…';
-    timeEl.textContent = '';
-    btn.disabled = true;
-    try {
-      const text = await callClaudeFutureSelf(apiKey);
-      const generatedAt = Date.now();
-      localStorage.setItem(cacheKey, JSON.stringify({ text, generatedAt }));
-      typewriterThenRenderFs(bodyEl, text);
-      timeEl.textContent = formatFsTime(generatedAt);
-    } catch (e) {
-      bodyEl.textContent = 'Brief momentan nicht verfügbar.';
-    } finally {
-      btn.disabled = false;
-    }
-  }
-
-  $('fsRefreshBtn').addEventListener('click', () => generateAndShowFutureSelf(true));
-  generateAndShowFutureSelf(false);
-})();
-</script>
 </body>
 </html>

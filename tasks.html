@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script>
+window.onerror = function (msg, src, line) {
+  console.error('[Error]', msg, line);
+  return true;
+};
+window.onunhandledrejection = function (e) {
+  console.error('[Promise]', e.reason);
+  e.preventDefault();
+};
+</script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Aufgaben · Dashboard</title>
+<script src="topbar.js" defer></script>
+<style>
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --success: #6BE3A4;
+  --warning: #F2C063;
+  --danger: #FF6B6B;
+  --border-strong: rgba(255,255,255,0.12);
+  --bg-input: rgba(0,0,0,0.28);
+  --bg-input-focus: rgba(0,0,0,0.36);
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #050506;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(224, 118, 88, 0.16), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(180, 180, 200, 0.06), transparent 50%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: -2;
+  animation: drift 36s ease-in-out infinite alternate;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px;
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes drift {
+  0%   { transform: translate3d(0,0,0); }
+  100% { transform: translate3d(-22px, 14px, 0); }
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.page { max-width: 1100px; margin: 0 auto; }
+
+.back-link {
+  position: fixed; top: 16px; left: 16px; z-index: 100;
+  font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600;
+  letter-spacing: 0.1em; color: #f5a623; opacity: 0.7; cursor: pointer;
+  text-decoration: none; transition: opacity 0.15s;
+}
+.back-link:hover { opacity: 1; }
+
+.dash-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+@media (max-width: 480px) { .dash-title { font-size: 22px; } }
+
+.tasks-head-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin: 40px 0 18px;
+}
+
+/* ===== Unified "+ Hinzufügen" button — amber, monospace ===== */
+.add-btn-amber {
+  flex-shrink: 0;
+  border: 1px solid rgba(245,158,11,0.45);
+  background: rgba(245,158,11,0.10);
+  color: #f5a623;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 11px 18px; border-radius: 12px; cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.add-btn-amber:hover { background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.65); transform: translateY(-1px); }
+.add-btn-amber:active { transform: translateY(0); }
+
+/* ===== Aufgaben Kanban (lifted from main.html) ===== */
+.kb-tabs { display: inline-flex; border: 1px solid rgba(255,255,255,0.10); border-radius: 11px; overflow: hidden; margin-bottom: 14px; }
+.kb-tab {
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-family: inherit; font-size: 12px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 10px 18px; cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.kb-tab.on { background: rgba(255,255,255,0.12); color: var(--text-primary); }
+.kb-tab:hover:not(.on) { color: var(--text-secondary); }
+
+.kb-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.kb-col {
+  display: flex; flex-direction: column;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px; padding: 14px;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+}
+.kb-col-head {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 12px; padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.kb-col-icon { font-size: 16px; }
+.kb-col-title { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.kb-col-mit        .kb-col-title { color: var(--danger); }
+.kb-col-8020       .kb-col-title { color: var(--warning); }
+.kb-col-delegieren .kb-col-title { color: var(--success); }
+.kb-col-eliminieren .kb-col-title { color: var(--text-tertiary); }
+
+.kb-cards { display: flex; flex-direction: column; gap: 8px; min-height: 8px; }
+.kb-empty { font-size: 12px; font-style: italic; color: var(--text-tertiary); padding: 8px 2px; }
+
+.kb-card {
+  position: relative;
+  display: flex; align-items: flex-start; gap: 8px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 10px 30px 10px 10px;
+  animation: kb-slide-in 0.22s ease-out;
+}
+.kb-card.kb-card-exit { animation: kb-slide-out 0.22s ease-in forwards; }
+@keyframes kb-slide-in {
+  from { transform: translateY(14px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+@keyframes kb-slide-out {
+  from { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(30px); opacity: 0; }
+}
+.kb-card.kb-card-done { opacity: 0.4; }
+.kb-card.kb-card-done .kb-card-text { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
+.kb-card-body { flex: 1; min-width: 0; }
+.kb-card-text { font-size: 13px; color: var(--text-primary); }
+.kb-card-account {
+  font-size: 11px; color: var(--text-tertiary); margin: 4px -3px -2px;
+  cursor: text; outline: none; border-radius: 4px; padding: 1px 3px;
+}
+.kb-card-account:empty::before { content: attr(data-placeholder); opacity: 0.6; }
+.kb-card-account[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.25); }
+.kb-card-del {
+  position: absolute; top: 8px; right: 8px;
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-size: 13px; cursor: pointer; padding: 2px 5px; border-radius: 6px;
+  opacity: 0; transition: opacity 0.15s, color 0.15s;
+}
+.kb-card:hover .kb-card-del { opacity: 1; }
+.kb-card-del:hover { color: var(--danger); }
+.gm-check {
+  appearance: none; -webkit-appearance: none;
+  width: 20px; height: 20px; flex-shrink: 0; margin: 1px 0 0;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.28); border-radius: 6px;
+  position: relative; cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.25s;
+}
+.gm-check:checked {
+  background: var(--success); border-color: var(--success);
+  box-shadow: 0 0 12px rgba(107,227,164,0.40);
+}
+.gm-check:checked::after {
+  content: ''; position: absolute; left: 5px; top: 1px;
+  width: 6px; height: 10px;
+  border: solid #0A0A0B; border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+
+@media (max-width: 720px) { .kb-board { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) {
+  .kb-board { grid-template-columns: 1fr; }
+  .tasks-head-row { flex-wrap: wrap; }
+}
+
+/* ===== Add-Aufgabe modal ===== */
+.modal-bg {
+  position: fixed; inset: 0; z-index: 200; display: none;
+  align-items: center; justify-content: center; padding: 20px;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.modal-bg.show { display: flex; }
+.modal-box {
+  width: 100%; max-width: 420px;
+  background: #0e0e10; border: 1px solid var(--border-strong);
+  border-radius: 18px; padding: 22px; box-shadow: 0 24px 70px rgba(0,0,0,0.6);
+}
+.modal-box-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.modal-box-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.modal-box-close { border: 0; background: transparent; color: var(--text-tertiary); font-size: 24px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.modal-box-close:hover { color: var(--text-primary); }
+.bg-field { margin-bottom: 12px; }
+.bg-field label {
+  display: block; font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px;
+}
+.bg-input {
+  width: 100%; font-size: 13px; padding: 9px 11px; border-radius: 10px;
+  border: 1px solid var(--border-strong); background: var(--bg-input); color: var(--text-primary);
+  font-family: inherit; transition: border-color 0.18s, background 0.18s;
+}
+.bg-input:focus { outline: none; border-color: rgba(255,255,255,0.40); background: var(--bg-input-focus); }
+.bg-select { cursor: pointer; }
+.modal-submit-btn {
+  width: 100%; margin-top: 6px; padding: 11px;
+  border: 1px solid rgba(245,158,11,0.45); border-radius: 10px;
+  background: rgba(245,158,11,0.10); color: #f5a623;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.modal-submit-btn:hover { background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.65); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <a href="index.html" class="back-link" id="backLink">← Dashboard</a>
+  <div id="sync-dot" style="position:fixed; top:14px; right:14px; width:8px; height:8px; border-radius:50%; background:#22c55e; z-index:999;"></div>
+
+  <div class="tasks-head-row">
+    <h1 class="dash-title">Aufgaben</h1>
+    <button type="button" class="add-btn-amber" id="taskAddOpenBtn">+ Aufgabe hinzufügen</button>
+  </div>
+
+  <div class="kb-tabs" id="kbTabs">
+    <button type="button" class="kb-tab on" data-tab="today">Heute</button>
+    <button type="button" class="kb-tab" data-tab="tomorrow">Morgen</button>
+    <button type="button" class="kb-tab" data-tab="all">Alle</button>
+  </div>
+
+  <div class="kb-board">
+    <div class="kb-col">
+      <div class="kb-col-head kb-col-mit">
+        <span class="kb-col-icon">🎯</span>
+        <span class="kb-col-title">MIT</span>
+      </div>
+      <div class="kb-cards" id="kbCards-mit"></div>
+    </div>
+
+    <div class="kb-col">
+      <div class="kb-col-head kb-col-8020">
+        <span class="kb-col-icon">⚡</span>
+        <span class="kb-col-title">80-20</span>
+      </div>
+      <div class="kb-cards" id="kbCards-8020"></div>
+    </div>
+
+    <div class="kb-col">
+      <div class="kb-col-head kb-col-delegieren">
+        <span class="kb-col-icon">🤝</span>
+        <span class="kb-col-title">Delegieren</span>
+      </div>
+      <div class="kb-cards" id="kbCards-delegieren"></div>
+    </div>
+
+    <div class="kb-col">
+      <div class="kb-col-head kb-col-eliminieren">
+        <span class="kb-col-icon">🗑️</span>
+        <span class="kb-col-title">Eliminieren</span>
+      </div>
+      <div class="kb-cards" id="kbCards-eliminieren"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-bg" id="taskAddModalBg">
+  <div class="modal-box" role="dialog" aria-label="Aufgabe hinzufügen">
+    <div class="modal-box-head">
+      <span class="modal-box-title">+ Aufgabe</span>
+      <button type="button" class="modal-box-close" id="taskAddModalClose">×</button>
+    </div>
+    <div class="bg-field">
+      <label>Text</label>
+      <input type="text" id="taskAddInput" class="bg-input" placeholder="Neue Aufgabe…" autocomplete="off">
+    </div>
+    <div class="bg-field">
+      <label>Kategorie</label>
+      <select id="taskAddCategory" class="bg-input bg-select">
+        <option value="mit">🎯 MIT</option>
+        <option value="8020">⚡ 80-20</option>
+        <option value="delegieren">🤝 Delegieren</option>
+        <option value="eliminieren">🗑️ Eliminieren</option>
+      </select>
+    </div>
+    <button type="button" class="modal-submit-btn" id="taskAddSubmitBtn">Hinzufügen</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function dateToKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function activeDateKey() {
+    const now = new Date();
+    if (now.getHours() < 6) { const d = new Date(now); d.setDate(d.getDate() - 1); return dateToKey(d); }
+    return dateToKey(now);
+  }
+  function tomorrowDateKey() {
+    const now = new Date();
+    const d = new Date(now);
+    if (now.getHours() >= 6) d.setDate(d.getDate() + 1);
+    return dateToKey(d);
+  }
+
+  const CATEGORIES = ['mit', '8020', 'delegieren', 'eliminieren'];
+  let currentTab = 'today';
+
+  function bucketKey(tab) {
+    if (tab === 'today') return 'tasks-' + activeDateKey();
+    if (tab === 'tomorrow') return 'tasks-' + tomorrowDateKey();
+    return 'tasks-all';
+  }
+  function loadBucket(tab) {
+    try {
+      const list = JSON.parse(localStorage.getItem(bucketKey(tab)));
+      return Array.isArray(list) ? list : [];
+    } catch (e) { return []; }
+  }
+  function saveBucket(tab, list) { localStorage.setItem(bucketKey(tab), JSON.stringify(list)); }
+
+  function buildCard(task, tab) {
+    const card = document.createElement('div');
+    card.className = 'kb-card' + (task.done ? ' kb-card-done' : '');
+    card.dataset.id = task.id;
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'gm-check';
+    cb.checked = !!task.done;
+    cb.addEventListener('change', () => {
+      const list = loadBucket(tab);
+      const t = list.find((x) => x.id === task.id);
+      if (t) t.done = cb.checked;
+      saveBucket(tab, list);
+      card.classList.toggle('kb-card-done', cb.checked);
+    });
+    card.appendChild(cb);
+
+    const body = document.createElement('div');
+    body.className = 'kb-card-body';
+
+    const text = document.createElement('div');
+    text.className = 'kb-card-text';
+    text.textContent = task.text;
+    body.appendChild(text);
+
+    const account = document.createElement('div');
+    account.className = 'kb-card-account';
+    account.contentEditable = 'true';
+    account.dataset.placeholder = '+ Account';
+    account.textContent = task.account || '';
+    function commitAccount() {
+      const next = account.textContent.trim();
+      const list = loadBucket(tab);
+      const t = list.find((x) => x.id === task.id);
+      if (t) t.account = next;
+      saveBucket(tab, list);
+    }
+    account.addEventListener('blur', commitAccount);
+    account.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); account.blur(); }
+      else if (e.key === 'Escape') { e.preventDefault(); account.textContent = task.account || ''; account.blur(); }
+    });
+    body.appendChild(account);
+    card.appendChild(body);
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'kb-card-del';
+    del.setAttribute('aria-label', 'Löschen');
+    del.textContent = '✕';
+    del.addEventListener('click', () => {
+      card.classList.add('kb-card-exit');
+      card.addEventListener('animationend', () => {
+        const list = loadBucket(tab);
+        const idx = list.findIndex((x) => x.id === task.id);
+        if (idx > -1) { list.splice(idx, 1); saveBucket(tab, list); }
+        card.remove();
+      }, { once: true });
+    });
+    card.appendChild(del);
+
+    return card;
+  }
+
+  function renderColumn(cat) {
+    const list = loadBucket(currentTab).filter((t) => t && t.category === cat);
+    const el = $('kbCards-' + cat);
+    el.innerHTML = '';
+    if (!list.length) {
+      const empty = document.createElement('div');
+      empty.className = 'kb-empty';
+      empty.textContent = 'Keine Aufgaben';
+      el.appendChild(empty);
+      return;
+    }
+    list.forEach((task) => el.appendChild(buildCard(task, currentTab)));
+  }
+  function renderBoard() { CATEGORIES.forEach(renderColumn); }
+
+  function addTask(cat, text) {
+    const list = loadBucket(currentTab);
+    list.push({ id: 'k' + Date.now() + Math.random().toString(36).slice(2, 7), text, category: cat, account: '', done: false });
+    saveBucket(currentTab, list);
+    renderColumn(cat);
+  }
+
+  document.querySelectorAll('.kb-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      currentTab = tab.dataset.tab;
+      document.querySelectorAll('.kb-tab').forEach((t) => t.classList.toggle('on', t === tab));
+      renderBoard();
+    });
+  });
+
+  /* ---------- + Aufgabe hinzufügen (modal) ---------- */
+  const addModalBg = $('taskAddModalBg');
+  const addInput = $('taskAddInput');
+  const addCategory = $('taskAddCategory');
+
+  function openAddModal() {
+    addInput.value = '';
+    addCategory.value = 'mit';
+    addModalBg.classList.add('show');
+    addInput.focus();
+  }
+  function closeAddModal() { addModalBg.classList.remove('show'); }
+
+  $('taskAddOpenBtn').addEventListener('click', openAddModal);
+  $('taskAddModalClose').addEventListener('click', closeAddModal);
+  addModalBg.addEventListener('click', (e) => { if (e.target === addModalBg) closeAddModal(); });
+
+  function submitAdd() {
+    const text = addInput.value.trim();
+    if (!text) return;
+    addTask(addCategory.value, text);
+    closeAddModal();
+  }
+  $('taskAddSubmitBtn').addEventListener('click', submitAdd);
+  addInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitAdd(); });
+
+  renderBoard();
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  function goBackToDashboard() {
+    document.body.style.transition = 'opacity 150ms ease';
+    document.body.style.opacity = '0';
+    setTimeout(() => { window.location.href = 'index.html'; }, 150);
+  }
+  const backLinkEl = document.getElementById('backLink');
+  if (backLinkEl) backLinkEl.addEventListener('click', (e) => { e.preventDefault(); goBackToDashboard(); });
+
+  function setSyncDot(state) {
+    const dot = document.getElementById('sync-dot');
+    if (!dot) return;
+    dot.style.background = state === 'red' ? '#ef4444' : '#22c55e';
+    dot.style.animation = state === 'red' ? 'pulse 1s infinite' : 'none';
+  }
+  window.addEventListener('online', () => setSyncDot('green'));
+  window.addEventListener('offline', () => setSyncDot('red'));
+  setSyncDot(navigator.onLine ? 'green' : 'red');
+})();
+</script>
+</body>
+</html>
