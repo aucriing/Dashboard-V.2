@@ -23,7 +23,9 @@
       "Bash(rm -f /tmp/_h_chk.js)",
       "Bash(node --check /tmp/_caf_chk.js)",
       "Bash(node --check /tmp/_caf2.js)",
-      "Bash(node --check /tmp/_idx_chk.js)"
+      "Bash(node --check /tmp/_idx_chk.js)",
+      "Bash(node --check /tmp/_main_chk.js)",
+      "Bash(node --check /tmp/_health_chk.js)"
     ],
     "additionalDirectories": [
       "/tmp",

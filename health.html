@@ -199,6 +199,20 @@ main {
 .stack-item.taken { background: rgba(29,158,117,0.08); }
 .stack-item.taken .stack-item-name { text-decoration: line-through; color: var(--text-tertiary); }
 
+.stack-item.not-due { opacity: 0.45; }
+.stack-item.not-due .stack-item-meta { color: var(--text-tertiary); font-style: italic; }
+.stack-item.not-due .stack-check { cursor: pointer; }
+
+@keyframes stack-item-remove {
+  from { opacity: 1; max-height: 100px; transform: translateY(0); margin-bottom: 6px; }
+  to   { opacity: 0; max-height: 0; transform: translateY(-16px); margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
+}
+.stack-item.stack-item-removing {
+  animation: stack-item-remove 0.28s ease forwards;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 @keyframes verpasst-pulse {
   0%,100% { border-color: rgba(239,68,68,0.8); }
   50% { border-color: rgba(239,68,68,0.2); }
@@ -554,23 +568,6 @@ main {
 .bg-result-value { font-size: 13px; font-weight: 700; color: var(--text-primary); text-align: right; }
 
 .supp-submit-btn { width: 100%; margin-top: 6px; }
-.supp-weekday-toggle { display: flex; gap: 6px; }
-.supp-weekday-toggle button {
-  flex: 1; padding: 8px 0; border-radius: 8px; border: 1px solid var(--border-strong);
-  background: transparent; color: var(--text-tertiary); font-family: var(--font-mono);
-  font-size: 11px; font-weight: 700; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-.supp-weekday-toggle button.on { background: var(--accent); border-color: var(--accent); color: #FFFFFF; }
-
-.supp-cal-preview { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 2px; }
-.supp-cal-day {
-  flex-shrink: 0; width: 30px; padding: 6px 0; border-radius: 8px; text-align: center;
-  background: rgba(255,255,255,0.035); border: 1px solid var(--border-soft);
-}
-.supp-cal-day .scd-dow { font-size: 9px; color: var(--text-quaternary); display: block; }
-.supp-cal-day .scd-num { font-size: 12px; font-weight: 700; color: var(--text-tertiary); display: block; }
-.supp-cal-day.on { background: var(--accent-glow); border-color: var(--accent); }
-.supp-cal-day.on .scd-dow, .supp-cal-day.on .scd-num { color: var(--text-primary); }
 
 /* ===== Stack: "+ Supplement" head row, emoji, missed badge ===== */
 .stack-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
@@ -700,26 +697,19 @@ main {
           <select id="suppFrequency" class="bg-input bg-select">
             <option value="daily">Täglich</option>
             <option value="every2">Jeden 2. Tag</option>
+            <option value="every3">Jeden 3. Tag</option>
+            <option value="every4">Jeden 4. Tag</option>
+            <option value="every5">Jeden 5. Tag</option>
+            <option value="every6">Jeden 6. Tag</option>
+            <option value="weekly">Wöchentlich (jeden 7. Tag)</option>
             <option value="custom">Benutzerdefiniert</option>
           </select>
         </div>
-        <div class="bg-field"><label>Startdatum</label><input type="date" id="suppStartDate" class="bg-input"></div>
+        <div class="bg-field"><label>Ab wann?</label><input type="date" id="suppStartDate" class="bg-input"></div>
       </div>
-      <div class="bg-field" id="suppWeekdaysField" style="display:none;">
-        <label>Wochentage</label>
-        <div class="supp-weekday-toggle" id="suppWeekdayToggle">
-          <button type="button" data-d="1">Mo</button>
-          <button type="button" data-d="2">Di</button>
-          <button type="button" data-d="3">Mi</button>
-          <button type="button" data-d="4">Do</button>
-          <button type="button" data-d="5">Fr</button>
-          <button type="button" data-d="6">Sa</button>
-          <button type="button" data-d="0">So</button>
-        </div>
-      </div>
-      <div class="bg-field">
-        <label>Vorschau — nächste 14 Tage</label>
-        <div class="supp-cal-preview" id="suppCalPreview"></div>
+      <div class="bg-field" id="suppCustomIntervalField" style="display:none;">
+        <label>Alle X Tage</label>
+        <input type="number" id="suppCustomInterval" class="bg-input" min="1" step="1" placeholder="z. B. 10">
       </div>
       <button type="button" class="bg-done-btn supp-submit-btn" id="suppSubmitBtn">Hinzufügen</button>
     </div>
@@ -815,19 +805,30 @@ main {
   }
 
   function stripTime(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  const FREQUENCY_INTERVALS = { daily: 1, every2: 2, every3: 3, every4: 4, every5: 5, every6: 6, weekly: 7 };
+  function intervalForItem(item) {
+    if (item.frequency === 'custom') return Math.max(1, Number(item.customInterval) || 1);
+    return FREQUENCY_INTERVALS[item.frequency] || 1;
+  }
   function isScheduledOn(item, dateObj) {
-    const freq = item.frequency || 'daily';
-    if (freq === 'every2') {
-      if (!item.startDate) return true;
-      const start = stripTime(new Date(item.startDate + 'T00:00:00'));
-      const diffDays = Math.round((stripTime(dateObj) - start) / 86400000);
-      return diffDays >= 0 && diffDays % 2 === 0;
-    }
-    if (freq === 'custom') {
-      if (!Array.isArray(item.weekdays) || !item.weekdays.length) return true;
-      return item.weekdays.includes(dateObj.getDay());
-    }
-    return true; // 'daily' or unrecognized — always scheduled
+    const interval = intervalForItem(item);
+    if (interval <= 1) return true;
+    if (!item.startDate) return true;
+    const start = stripTime(new Date(item.startDate + 'T00:00:00'));
+    const diffDays = Math.round((stripTime(dateObj) - start) / 86400000);
+    return diffDays >= 0 && diffDays % interval === 0;
+  }
+  function nextScheduledDate(item, fromDate) {
+    const interval = intervalForItem(item);
+    const from = stripTime(fromDate);
+    if (interval <= 1 || !item.startDate) return from;
+    const start = stripTime(new Date(item.startDate + 'T00:00:00'));
+    const diffDays = Math.round((from - start) / 86400000);
+    if (diffDays < 0) return start;
+    const rem = diffDays % interval;
+    const next = new Date(from);
+    if (rem !== 0) next.setDate(next.getDate() + (interval - rem));
+    return next;
   }
 
   const TEMPLATE_VERSION = 5;
@@ -959,12 +960,20 @@ main {
     render();
   }
   function deleteItem(id) {
-    setItems(getItems().filter(i => i.id !== id));
-    const taken = getTaken();
-    delete taken[id];
-    setTaken(taken);
-    setLow(getLow().filter(x => x !== id));
-    render();
+    const row = document.querySelector(`[data-action="del"][data-id="${id}"]`)?.closest('.stack-item');
+    if (row && row.classList.contains('stack-item-removing')) return;
+    if (!confirm('Supplement löschen?')) return;
+    const removeFromStore = () => {
+      setItems(getItems().filter(i => i.id !== id));
+      const taken = getTaken();
+      delete taken[id];
+      setTaken(taken);
+      setLow(getLow().filter(x => x !== id));
+      render();
+    };
+    if (!row) { removeFromStore(); return; }
+    row.classList.add('stack-item-removing');
+    row.addEventListener('animationend', removeFromStore, { once: true });
   }
   function addItem(opts) {
     const v = String((opts && opts.name) || '').trim();
@@ -978,9 +987,9 @@ main {
       window: ['morning','lunch','evening','anytime'].includes(windowKey) ? windowKey : 'anytime',
       note: String(opts.note || '').trim(),
       icon: String(opts.icon || '').trim(),
-      frequency: ['daily','every2','custom'].includes(opts.frequency) ? opts.frequency : 'daily',
+      frequency: Object.keys(FREQUENCY_INTERVALS).concat('custom').includes(opts.frequency) ? opts.frequency : 'daily',
       startDate: opts.startDate || getActiveDate(),
-      weekdays: Array.isArray(opts.weekdays) ? opts.weekdays : [],
+      customInterval: opts.frequency === 'custom' ? Math.max(1, Number(opts.customInterval) || 1) : null,
       tag: null, ordered: true
     });
     setItems(items);
@@ -1013,7 +1022,7 @@ main {
     const nowHour = now.getHours() + (now.getMinutes() / 60);
 
     STACK_WINDOWS.forEach(win => {
-      const winItems = items.filter(i => (i.window || 'anytime') === win.key && isScheduledOn(i, now));
+      const winItems = items.filter(i => (i.window || 'anytime') === win.key);
       if (winItems.length === 0) return;
 
       const group = document.createElement('div');
@@ -1030,16 +1039,21 @@ main {
       winItems.forEach(item => {
         const isTaken = !!taken[item.id];
         const isLow = low.includes(item.id);
-        const isMissed = !isTaken && isPastCutoff;
+        const isDue = isScheduledOn(item, now);
+        const isMissed = isDue && !isTaken && isPastCutoff;
 
         const row = document.createElement('div');
-        row.className = 'stack-item' + (isTaken ? ' taken' : '') + (isMissed ? ' missed' : '');
+        row.className = 'stack-item' + (isTaken ? ' taken' : '') + (isMissed ? ' missed' : '') + (!isDue ? ' not-due' : '');
 
         let tagHtml = '';
         if (item.tag === 'stack') tagHtml = '<span class="stack-item-tag tag-stack">stack</span>';
         else if (item.tag === 'not-ordered') tagHtml = '<span class="stack-item-tag tag-not-ordered">not ordered</span>';
         const missedBadgeHtml = isMissed ? '<span class="stack-item-missed-badge">VERPASST</span>' : '';
         const iconHtml = item.icon ? `<span class="stack-item-icon">${escapeHtml(item.icon)}</span>` : '';
+        const metaHtml = isDue
+          ? escapeHtml(metaText(item))
+          : 'Nächste Einnahme: ' + nextScheduledDate(item, now).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+        const metaEditAttrs = isDue ? `data-edit="meta" data-id="${item.id}"` : '';
 
         row.innerHTML = `
           <button class="stack-check ${isTaken ? 'checked' : ''}" data-action="toggle" data-id="${item.id}" aria-label="Mark taken">${isTaken ? '✓' : ''}</button>
@@ -1047,7 +1061,7 @@ main {
             <div class="stack-item-name" data-edit="name" data-id="${item.id}">
               ${iconHtml}<span class="stack-item-name-text">${escapeHtml(item.name)}</span>${tagHtml}${missedBadgeHtml}
             </div>
-            <div class="stack-item-meta" data-edit="meta" data-id="${item.id}">${escapeHtml(metaText(item))}</div>
+            <div class="stack-item-meta" ${metaEditAttrs}>${metaHtml}</div>
           </div>
           <button class="stack-low-btn ${isLow ? 'is-low' : ''}" data-action="low" data-id="${item.id}">↓ Running low</button>
           <button class="stack-item-del" data-action="del" data-id="${item.id}" aria-label="Delete">×</button>`;
@@ -1245,14 +1259,12 @@ main {
   const winSelect      = document.getElementById('suppWindow');
   const freqSelect     = document.getElementById('suppFrequency');
   const startDateInput = document.getElementById('suppStartDate');
-  const weekdaysField  = document.getElementById('suppWeekdaysField');
-  const weekdayToggle  = document.getElementById('suppWeekdayToggle');
-  const calPreviewEl   = document.getElementById('suppCalPreview');
+  const customIntervalField = document.getElementById('suppCustomIntervalField');
+  const customIntervalInput = document.getElementById('suppCustomInterval');
   const submitBtn      = document.getElementById('suppSubmitBtn');
   const resultsEl      = document.getElementById('suppSearchResults');
 
   let pendingNote = ''; // hidden note auto-filled when a DB result is selected
-  let weekdayState = []; // selected weekday numbers (0=Sun..6=Sat) for 'custom' frequency
 
   function searchSupplements(q) {
     const query = q.toLowerCase().trim();
@@ -1314,45 +1326,18 @@ main {
     submitBtn.focus();
   });
 
-  function renderSuppCalPreview() {
-    const startVal = startDateInput.value || getActiveDate();
-    const start = stripTime(new Date(startVal + 'T00:00:00'));
-    const fakeItem = { frequency: freqSelect.value, startDate: startVal, weekdays: weekdayState };
-    const dows = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-    let html = '';
-    for (let i = 0; i < 14; i++) {
-      const d = new Date(start);
-      d.setDate(d.getDate() + i);
-      const on = isScheduledOn(fakeItem, d);
-      html += `<div class="supp-cal-day${on ? ' on' : ''}"><span class="scd-dow">${dows[d.getDay()]}</span><span class="scd-num">${d.getDate()}</span></div>`;
-    }
-    calPreviewEl.innerHTML = html;
-  }
-
-  weekdayToggle.querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const d = Number(btn.dataset.d);
-      btn.classList.toggle('on');
-      weekdayState = weekdayState.includes(d) ? weekdayState.filter(x => x !== d) : [...weekdayState, d];
-      renderSuppCalPreview();
-    });
-  });
   freqSelect.addEventListener('change', () => {
-    weekdaysField.style.display = freqSelect.value === 'custom' ? '' : 'none';
-    renderSuppCalPreview();
+    customIntervalField.style.display = freqSelect.value === 'custom' ? '' : 'none';
   });
-  startDateInput.addEventListener('change', renderSuppCalPreview);
 
   function resetSuppForm() {
     nameInput.value = ''; emojiInput.value = ''; doseInput.value = '';
     winSelect.value = 'morning'; freqSelect.value = 'daily';
     startDateInput.value = getActiveDate();
-    weekdayState = [];
-    weekdayToggle.querySelectorAll('button').forEach(b => b.classList.remove('on'));
-    weekdaysField.style.display = 'none';
+    customIntervalInput.value = '';
+    customIntervalField.style.display = 'none';
     pendingNote = '';
     resultsEl.hidden = true;
-    renderSuppCalPreview();
   }
 
   function openSuppModal() { resetSuppForm(); suppModalBg.classList.add('show'); nameInput.focus(); }
@@ -1371,7 +1356,7 @@ main {
       icon: emojiInput.value,
       frequency: freqSelect.value,
       startDate: startDateInput.value || getActiveDate(),
-      weekdays: weekdayState,
+      customInterval: customIntervalInput.value,
     });
     closeSuppModal();
   });

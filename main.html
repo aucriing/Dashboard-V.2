@@ -331,32 +331,6 @@ body::after {
 }
 .gm-card-tomorrow .gm-progress-row { display: none; }
 
-.gm-streak {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
-  color: var(--text-tertiary);
-  font-size: 11px; font-weight: 600;
-  letter-spacing: 0.10em; text-transform: uppercase;
-  transition: background 0.25s, color 0.25s, border-color 0.25s;
-}
-.gm-streak-icon { font-size: 13px; }
-.gm-streak-num {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.gm-streak.gm-streak-active {
-  background: rgba(242,192,99,0.10);
-  color: #F2C063;
-  border-color: rgba(242,192,99,0.32);
-}
-.gm-streak.gm-streak-active .gm-streak-icon {
-  filter: drop-shadow(0 0 6px rgba(242,192,99,0.6));
-}
-
 .gm-bar {
   display: flex; gap: 4px;
   height: 6px;
@@ -628,24 +602,8 @@ body::after {
   -webkit-backdrop-filter: blur(24px) saturate(1.2);
   transition: border-color 0.3s, box-shadow 0.3s;
 }
-@keyframes verpasst-pulse {
-  0%,100% { border-color: rgba(239,68,68,0.8); }
-  50% { border-color: rgba(239,68,68,0.2); }
-}
-.td-card.td-missed {
-  border-color: rgba(239,68,68,0.8);
-  animation: verpasst-pulse 1.5s ease-in-out infinite;
-}
 .td-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 .td-card-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-.td-missed-badge {
-  display: none;
-  font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
-  padding: 4px 9px; border-radius: 999px;
-  background: rgba(255,107,107,0.18); color: var(--danger);
-}
-.td-missed-badge::before { content: '● '; }
-.td-card.td-missed .td-missed-badge { display: inline-block; }
 
 .td-list { display: flex; flex-direction: column; gap: 6px; }
 .td-row {
@@ -664,7 +622,6 @@ body::after {
   background: rgba(255,255,255,0.06); color: var(--text-tertiary);
 }
 .td-tag.td-tag-routine    { background: rgba(167,139,250,0.15); color: #A78BFA; }
-.td-tag.td-tag-supplement { background: rgba(167,243,208,0.15); color: #A7F3D0; }
 .td-tag.td-tag-account    { background: rgba(242,192,99,0.15);  color: #F2C063; }
 
 .td-add-routine-btn {
@@ -860,61 +817,6 @@ body::after {
 .td-modal-body { font-size: 13px; color: var(--text-secondary); line-height: 1.6; white-space: pre-line; }
 
 
-/* ===== Progress section ===== */
-.prog-card {
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 16px; padding: 20px; margin-bottom: 14px;
-  backdrop-filter: blur(24px) saturate(1.2); -webkit-backdrop-filter: blur(24px) saturate(1.2);
-}
-.prog-card-title { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 14px; }
-.prog-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 4px; }
-.prog-cal-day {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 10px 2px; border-radius: 10px; cursor: pointer;
-  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06);
-  transition: background 0.15s, border-color 0.15s;
-}
-.prog-cal-day:hover { background: rgba(255,255,255,0.06); }
-.prog-cal-day .pcd-label { font-size: 10px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 0.04em; }
-.prog-cal-day .pcd-num { font-size: 13px; font-weight: 700; color: var(--text-primary); }
-.prog-cal-day.is-today { border-color: #F2C063; box-shadow: 0 0 0 1px rgba(242,192,99,0.35); }
-.prog-cal-day.is-active { background: rgba(107,227,164,0.14); }
-.prog-cal-day.is-active .pcd-num { color: #6BE3A4; }
-.prog-cal-day.is-inactive { background: rgba(255,255,255,0.02); }
-.prog-cal-day.is-future { opacity: 0.4; cursor: default; }
-.prog-day-detail {
-  margin-top: 10px; padding: 12px 14px; border-radius: 10px;
-  background: rgba(255,255,255,0.03); font-size: 12.5px; color: var(--text-secondary); line-height: 1.6;
-}
-
-.prog-photo-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.prog-photo-add-btn {
-  border: 1px dashed rgba(255,255,255,0.18); background: transparent; color: var(--text-secondary);
-  font-family: inherit; font-size: 12px; font-weight: 700; padding: 9px 14px; border-radius: 10px; cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
-}
-.prog-photo-add-btn:hover { border-color: rgba(255,255,255,0.35); color: var(--text-primary); }
-.prog-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px; }
-.prog-photo-item { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 1; background: rgba(255,255,255,0.04); }
-.prog-photo-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.prog-photo-date {
-  position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 5px;
-  font-family: var(--font-mono); font-size: 9px; color: #fff; text-align: center;
-  background: linear-gradient(180deg, transparent, rgba(0,0,0,0.75));
-}
-.prog-photo-del {
-  position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border-radius: 50%;
-  border: 0; background: rgba(0,0,0,0.55); color: #fff; font-size: 11px; line-height: 1; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s;
-}
-.prog-photo-item:hover .prog-photo-del { opacity: 1; }
-.prog-empty { font-size: 12px; font-style: italic; color: var(--text-tertiary); }
-
-.prog-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.prog-stat { text-align: center; padding: 12px 6px; border-radius: 12px; background: rgba(255,255,255,0.03); }
-.prog-stat .ps-num { font-size: 22px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
-.prog-stat .ps-label { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 4px; }
-
 /* ===== Weekly Review + Tagesabschluss Journal (reuse .td-modal-bg / .td-modal) ===== */
 .wj-field { margin-bottom: 14px; }
 .wj-field label {
@@ -952,9 +854,9 @@ body::after {
 /* ===== iPhone 12 Mini and similarly narrow phones ===== */
 @media (max-width: 390px) {
   body { font-size: 14px; padding: 12px 12px 70px; overflow-x: hidden; }
-  .kb-board, .prog-stats-grid { grid-template-columns: 1fr; }
-  .gm-card, .td-card, .prog-card, .kb-col { width: 100%; padding: 12px; }
-  .gm-add, .gm-polish, .kb-add-btn, .td-analysis-refresh-btn, .prog-photo-add-btn,
+  .kb-board { grid-template-columns: 1fr; }
+  .gm-card, .td-card, .kb-col { width: 100%; padding: 12px; }
+  .gm-add, .gm-polish, .kb-add-btn, .td-analysis-refresh-btn,
   .wj-btn-primary, .wj-btn-secondary, .wj-analyze-btn {
     min-height: 44px;
   }
@@ -1026,11 +928,6 @@ body::after {
             <span class="gm-progress-label" id="gmProgressLabel">no goals yet</span>
           </div>
         </div>
-        <div class="gm-streak" id="gmStreak">
-          <span class="gm-streak-icon">⚡</span>
-          <span class="gm-streak-num" id="gmStreakNum">0</span>
-          <span>day streak</span>
-        </div>
       </div>
       <div class="gm-bar" id="gmBar"></div>
       <ul id="goalList" class="goal-list gm-list"></ul>
@@ -1066,30 +963,6 @@ body::after {
 
   <div class="section">
     <div class="section-title">To Do Heute</div>
-
-    <div class="td-card" id="tdMorning" data-window="morning">
-      <div class="td-card-head">
-        <span class="td-card-title">🌅 Morgens</span>
-        <span class="td-missed-badge">VERPASST</span>
-      </div>
-      <div class="td-list" id="tdMorningList"></div>
-    </div>
-
-    <div class="td-card" id="tdLunch" data-window="lunch">
-      <div class="td-card-head">
-        <span class="td-card-title">🍽️ Mittags</span>
-        <span class="td-missed-badge">VERPASST</span>
-      </div>
-      <div class="td-list" id="tdLunchList"></div>
-    </div>
-
-    <div class="td-card" id="tdEvening" data-window="evening">
-      <div class="td-card-head">
-        <span class="td-card-title">🌙 Abends</span>
-        <span class="td-missed-badge">VERPASST</span>
-      </div>
-      <div class="td-list" id="tdEveningList"></div>
-    </div>
 
     <div class="td-card" id="tdTasks">
       <div class="td-card-head">
@@ -1191,33 +1064,6 @@ body::after {
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-title">Progress</div>
-
-    <div class="prog-card">
-      <div class="prog-card-title">Activity Kalender</div>
-      <div class="prog-cal" id="progCal"></div>
-      <div class="prog-day-detail" id="progDayDetail" style="display:none;"></div>
-    </div>
-
-    <div class="prog-card">
-      <div class="prog-photo-row">
-        <div class="prog-card-title" style="margin-bottom:0;">Foto Progress</div>
-        <button type="button" class="prog-photo-add-btn" id="progPhotoAddBtn">+ Foto</button>
-        <input type="file" id="progPhotoInput" accept="image/*" capture="environment" multiple style="display:none">
-      </div>
-      <div class="prog-photo-grid" id="progPhotoGrid"></div>
-    </div>
-
-    <div class="prog-card">
-      <div class="prog-card-title">Stats</div>
-      <div class="prog-stats-grid">
-        <div class="prog-stat"><div class="ps-num" id="progStatStreak">0</div><div class="ps-label">Streak</div></div>
-        <div class="prog-stat"><div class="ps-num" id="progStatTasks">0</div><div class="ps-label">Aufgaben diese Woche</div></div>
-        <div class="prog-stat"><div class="ps-num" id="progStatHabit">0%</div><div class="ps-label">Habit Rate</div></div>
-      </div>
-    </div>
-  </div>
 
 </div>
 
@@ -1392,32 +1238,6 @@ body::after {
       storeDelete(k);
     });
     setGoals(todayK, today);
-  }
-
-  // ---------- streak ----------
-  function loadStreak() {
-    const s = storeGet('goal_streak_v1');
-    if (s && typeof s.count === 'number') return s;
-    return { count: 0, lastProcessedDate: '' };
-  }
-  function saveStreak(s) { storeSet('goal_streak_v1', s); }
-
-  function processStreak() {
-    const s = loadStreak();
-    const todayDateStr = getActiveDateString();
-    const keys = storeListKeys('goals:')
-      .map(k => k.slice('goals:'.length))
-      .filter(d => d < todayDateStr)
-      .sort();
-    keys.forEach(dateStr => {
-      if (s.lastProcessedDate && dateStr <= s.lastProcessedDate) return;
-      const list = getGoals('goals:' + dateStr);
-      if (list.length === 0) { /* don't break the streak on empty days */ }
-      else if (list.every(g => g.done)) s.count += 1;
-      else s.count = 0;
-      s.lastProcessedDate = dateStr;
-    });
-    saveStreak(s);
   }
 
   // ---------- Goal Ticker ----------
@@ -1744,12 +1564,6 @@ body::after {
     pushBtn.style.display = (total > 0 && done < total) ? 'block' : 'none';
   }
 
-  function renderStreak() {
-    const s = loadStreak();
-    document.getElementById('gmStreakNum').textContent = s.count;
-    document.getElementById('gmStreak').classList.toggle('gm-streak-active', s.count > 0);
-  }
-
   function renderTomorrowCount() {
     const list = getGoals(tomorrowKey());
     document.getElementById('gmTomorrowCount').textContent = list.length + ' planned';
@@ -1909,17 +1723,15 @@ body::after {
 
   // ---------- Boot ----------
   rollover();
-  processStreak();
   loadToday();
   loadTomorrow();
-  renderStreak();
   updateDayRing();
   const dayRingTimer = setInterval(updateDayRing, 60 * 1000);
   startTicker();
 
   // Re-render when storage changes from another tab (or our bridged parent).
   window.addEventListener('storage', () => {
-    loadToday(); loadTomorrow(); renderStreak();
+    loadToday(); loadTomorrow();
   });
 
   // ---------- performance: clear page-level intervals when leaving ----------
@@ -2007,12 +1819,6 @@ document.addEventListener('DOMContentLoaded', function () {
     localStorage.setItem('goals:' + activeDateKey(), JSON.stringify(list));
     window.dispatchEvent(new CustomEvent('goals-changed'));
   }
-  function loadStackItems() {
-    const items = loadJSON('stack:items', []);
-    return Array.isArray(items) ? items : [];
-  }
-  function loadStackTaken() { return loadJSON('stack:taken:' + activeDateKey(), {}); }
-  function saveStackTaken(map) { localStorage.setItem('stack:taken:' + activeDateKey(), JSON.stringify(map)); }
   function loadRoutineItems() {
     const items = loadJSON('routines:items', []);
     return Array.isArray(items) ? items : [];
@@ -2020,8 +1826,6 @@ document.addEventListener('DOMContentLoaded', function () {
   function saveRoutineItems(list) { localStorage.setItem('routines:items', JSON.stringify(list)); }
   function loadRoutineDone() { return loadJSON('routines:done:' + activeDateKey(), {}); }
   function saveRoutineDone(map) { localStorage.setItem('routines:done:' + activeDateKey(), JSON.stringify(map)); }
-
-  const WINDOW_CUTOFF = { morning: 10, lunch: 14, evening: 23 };
 
   function makeRow(text, tagLabel, tagClass, done, onToggle) {
     const row = document.createElement('div');
@@ -2042,56 +1846,6 @@ document.addEventListener('DOMContentLoaded', function () {
       row.appendChild(tag);
     }
     return row;
-  }
-
-  /* ---------- Morgens / Mittags / Abends ---------- */
-  function renderWindowCard(windowKey, listElId, cardElId) {
-    const taken = loadStackTaken();
-    const rows = loadStackItems()
-      .filter((it) => it && it.window === windowKey)
-      .map((it) => ({
-        text: it.dose ? (it.name + ' (' + it.dose + ')') : it.name,
-        done: !!taken[it.id],
-        toggle: (checked) => {
-          const t = loadStackTaken();
-          if (checked) t[it.id] = Date.now(); else delete t[it.id];
-          saveStackTaken(t);
-          renderAllTodo();
-        },
-      }));
-
-    if (windowKey === 'morning') {
-      const rDone = loadRoutineDone();
-      loadRoutineItems().forEach((it) => {
-        rows.push({
-          text: it.text,
-          done: !!rDone[it.id],
-          toggle: (checked) => {
-            const d = loadRoutineDone();
-            if (checked) d[it.id] = true; else delete d[it.id];
-            saveRoutineDone(d);
-            renderAllTodo();
-          },
-        });
-      });
-    }
-
-    const el = $(listElId);
-    el.innerHTML = '';
-    if (!rows.length) {
-      const empty = document.createElement('div');
-      empty.className = 'empty-state';
-      empty.textContent = 'Nichts geplant';
-      el.appendChild(empty);
-    } else {
-      rows.forEach((r) => el.appendChild(makeRow(r.text, null, '', r.done, r.toggle)));
-    }
-
-    const card = $(cardElId);
-    const cutoff = WINDOW_CUTOFF[windowKey];
-    const hasOpen = rows.some((r) => !r.done);
-    const missed = cutoff != null && new Date().getHours() >= cutoff && hasOpen;
-    card.classList.toggle('td-missed', missed);
   }
 
   /* ---------- Aufgaben (combined, tagged view) ---------- */
@@ -2122,26 +1876,11 @@ document.addEventListener('DOMContentLoaded', function () {
       }));
     });
 
-    const taken = loadStackTaken();
-    loadStackItems().forEach((it) => {
-      if (taken[it.id]) return;
-      const label = it.dose ? (it.name + ' (' + it.dose + ')') : it.name;
-      rows.push(makeRow(label, 'Supplement', 'td-tag-supplement', false, (checked) => {
-        const t = loadStackTaken();
-        if (checked) t[it.id] = Date.now(); else delete t[it.id];
-        saveStackTaken(t);
-        renderAllTodo();
-      }));
-    });
-
     if (!rows.length) { emptyEl.style.display = 'block'; }
     else { emptyEl.style.display = 'none'; rows.forEach((r) => el.appendChild(r)); }
   }
 
   function renderAllTodo() {
-    renderWindowCard('morning', 'tdMorningList', 'tdMorning');
-    renderWindowCard('lunch',   'tdLunchList',   'tdLunch');
-    renderWindowCard('evening', 'tdEveningList', 'tdEvening');
     renderTasks();
   }
 
@@ -2183,8 +1922,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const rDone = loadRoutineDone();
     const routinesPending = routineItems.filter((it) => it && !rDone[it.id]);
 
-    const streak = loadJSON('goal_streak_v1', { count: 0 });
-
     // Mood letzte Woche: average over the last 7 days' Tagesabschluss-Journal entries.
     let moodSum = 0, moodCount = 0;
     for (let i = 0; i < 7; i++) {
@@ -2216,7 +1953,6 @@ document.addEventListener('DOMContentLoaded', function () {
     return {
       tasks: openGoals.length ? openGoals.join(', ') : 'keine offenen Aufgaben',
       routines: routineItems.length ? (routinesPending.length + '/' + routineItems.length + ' offen') : 'keine Routinen gesetzt',
-      streak: (streak.count || 0) + ' Tage',
       mood: moodText,
       weekplan: weekGoalTexts.length ? weekGoalTexts.join(', ') : 'keine Wochenziele gesetzt',
     };
@@ -2227,7 +1963,6 @@ document.addEventListener('DOMContentLoaded', function () {
       'Analysiere Daniels heutigen Tag:\n' +
       'Aufgaben offen: ' + ctx.tasks + '\n' +
       'Routinen: ' + ctx.routines + '\n' +
-      'Streak: ' + ctx.streak + '\n' +
       'Mood letzte Woche: ' + ctx.mood + '\n' +
       'Wochenziele: ' + ctx.weekplan + '\n\n' +
       'Direkte ehrliche Analyse in 5 Sätzen.\n' +
@@ -2462,175 +2197,6 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   renderBoard();
-})();
-</script>
-
-<script>
-(function () {
-  'use strict';
-  const $ = (id) => document.getElementById(id);
-  function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
-
-  function pad2(n) { return String(n).padStart(2, '0'); }
-  function dateToKey(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
-  function activeDateKey() {
-    const now = new Date();
-    if (now.getHours() < 6) { const d = new Date(now); d.setDate(d.getDate() - 1); return dateToKey(d); }
-    return dateToKey(now);
-  }
-  // Monday-start week containing today's "active date" (6 AM rollover).
-  function currentWeekDates() {
-    const now = new Date();
-    if (now.getHours() < 6) now.setDate(now.getDate() - 1);
-    const dow = now.getDay(); // 0=Sun..6=Sat
-    const mondayOffset = dow === 0 ? -6 : 1 - dow;
-    const monday = new Date(now);
-    monday.setDate(monday.getDate() + mondayOffset);
-    const days = [];
-    for (let i = 0; i < 7; i++) { const d = new Date(monday); d.setDate(d.getDate() + i); days.push(d); }
-    return days;
-  }
-
-  function dayActivity(dateKey) {
-    const goals = loadJSON('goals:' + dateKey, []);
-    const goalsDone = Array.isArray(goals) ? goals.filter((g) => g && g.done).length : 0;
-    const routinesDone = Object.keys(loadJSON('routines:done:' + dateKey, {})).length;
-    const suppsTaken = Object.keys(loadJSON('stack:taken:' + dateKey, {})).length;
-    const tasks = loadJSON('tasks-' + dateKey, []);
-    const tasksDone = Array.isArray(tasks) ? tasks.filter((t) => t && t.done).length : 0;
-    const hasJournal = !!localStorage.getItem('journal:' + dateKey);
-    return { goalsDone, routinesDone, suppsTaken, tasksDone, hasJournal, total: goalsDone + routinesDone + suppsTaken + tasksDone + (hasJournal ? 1 : 0) };
-  }
-
-  /* ---------- Activity calendar ---------- */
-  const DOW_LABELS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-  function renderCalendar() {
-    const el = $('progCal');
-    el.innerHTML = '';
-    const today = activeDateKey();
-    currentWeekDates().forEach((d, idx) => {
-      const key = dateToKey(d);
-      const cell = document.createElement('div');
-      cell.className = 'prog-cal-day';
-      const isFuture = key > today;
-      const isToday = key === today;
-      const act = dayActivity(key);
-      if (isToday) cell.classList.add('is-today');
-      else if (isFuture) cell.classList.add('is-future');
-      else cell.classList.add(act.total > 0 ? 'is-active' : 'is-inactive');
-      cell.innerHTML = '<span class="pcd-label">' + DOW_LABELS[idx] + '</span><span class="pcd-num">' + d.getDate() + '</span>';
-      if (!isFuture) cell.addEventListener('click', () => showDayDetail(key, act));
-      el.appendChild(cell);
-    });
-  }
-  function showDayDetail(key, act) {
-    const el = $('progDayDetail');
-    const parts = [];
-    if (act.goalsDone) parts.push(act.goalsDone + ' Ziel(e) erledigt');
-    if (act.routinesDone) parts.push(act.routinesDone + ' Routine(n) erledigt');
-    if (act.suppsTaken) parts.push(act.suppsTaken + ' Supplement(e) genommen');
-    if (act.tasksDone) parts.push(act.tasksDone + ' Aufgabe(n) erledigt');
-    if (act.hasJournal) parts.push('Journal ausgefüllt');
-    el.textContent = key + ' — ' + (parts.length ? parts.join(' · ') : 'Keine Aktivität');
-    el.style.display = 'block';
-  }
-
-  /* ---------- Foto Progress ---------- */
-  function loadPhotos() { const p = loadJSON('progress-photos', []); return Array.isArray(p) ? p : []; }
-  function savePhotos(arr) {
-    try { localStorage.setItem('progress-photos', JSON.stringify(arr)); return true; } catch (e) { return false; }
-  }
-  function renderPhotos() {
-    const grid = $('progPhotoGrid');
-    grid.innerHTML = '';
-    const photos = loadPhotos();
-    if (!photos.length) {
-      const empty = document.createElement('div');
-      empty.className = 'prog-empty';
-      empty.textContent = 'Noch keine Fotos — füge dein erstes Progress-Foto hinzu.';
-      grid.appendChild(empty);
-      return;
-    }
-    photos.slice().reverse().forEach((p) => {
-      const item = document.createElement('div');
-      item.className = 'prog-photo-item';
-      const img = document.createElement('img');
-      img.loading = 'lazy';
-      img.src = p.dataUrl; img.alt = p.date;
-      const date = document.createElement('div');
-      date.className = 'prog-photo-date'; date.textContent = p.date;
-      const del = document.createElement('button');
-      del.type = 'button'; del.className = 'prog-photo-del'; del.textContent = '×';
-      del.addEventListener('click', () => { savePhotos(loadPhotos().filter((x) => x.id !== p.id)); renderPhotos(); });
-      item.appendChild(img); item.appendChild(date); item.appendChild(del);
-      grid.appendChild(item);
-    });
-  }
-  function compressImage(file) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
-      reader.onload = () => { img.src = String(reader.result); };
-      reader.onerror = reject;
-      img.onload = () => {
-        const maxW = 800;
-        const scale = Math.min(1, maxW / img.width);
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.7));
-      };
-      img.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-  $('progPhotoAddBtn').addEventListener('click', () => $('progPhotoInput').click());
-  $('progPhotoInput').addEventListener('change', async (e) => {
-    const files = Array.from(e.target.files || []);
-    e.target.value = '';
-    for (const file of files) {
-      try {
-        const dataUrl = await compressImage(file);
-        const photos = loadPhotos();
-        photos.push({ id: 'p' + Date.now() + Math.random().toString(36).slice(2, 6), date: activeDateKey(), dataUrl });
-        if (!savePhotos(photos)) { alert('Speicher voll — bitte alte Fotos löschen.'); break; }
-      } catch (err) { /* skip unreadable file */ }
-    }
-    renderPhotos();
-  });
-
-  /* ---------- Stats ---------- */
-  function renderStats() {
-    const streak = loadJSON('goal_streak_v1', { count: 0 });
-    $('progStatStreak').textContent = streak.count || 0;
-
-    const week = currentWeekDates();
-    const today = activeDateKey();
-    const routineItems = loadJSON('routines:items', []);
-    const routineCount = Array.isArray(routineItems) ? routineItems.length : 0;
-    let tasksDone = 0, routineDoneTotal = 0, daysElapsed = 0;
-    week.forEach((d) => {
-      const key = dateToKey(d);
-      if (key > today) return;
-      daysElapsed++;
-      const goals = loadJSON('goals:' + key, []);
-      tasksDone += Array.isArray(goals) ? goals.filter((g) => g && g.done).length : 0;
-      const tasks = loadJSON('tasks-' + key, []);
-      tasksDone += Array.isArray(tasks) ? tasks.filter((t) => t && t.done).length : 0;
-      routineDoneTotal += Object.keys(loadJSON('routines:done:' + key, {})).length;
-    });
-    $('progStatTasks').textContent = tasksDone;
-
-    const expected = routineCount * daysElapsed;
-    $('progStatHabit').textContent = (expected > 0 ? Math.round((routineDoneTotal / expected) * 100) : 0) + '%';
-  }
-
-  renderCalendar();
-  renderPhotos();
-  renderStats();
-  window.addEventListener('storage', () => { renderCalendar(); renderStats(); });
-  window.addEventListener('goals-changed', () => { renderCalendar(); renderStats(); });
 })();
 </script>
 
