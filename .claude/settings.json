@@ -33,7 +33,10 @@
       "Bash(node --check /tmp/_main2_chk.js)",
       "Bash(node --check /tmp/_main3_chk.js)",
       "Bash(node --check /tmp/_fs2_chk.js)",
-      "Bash(node --check /tmp/_idx2_chk.js)"
+      "Bash(node --check /tmp/_idx2_chk.js)",
+      "Bash(node --check /tmp/_idx3_chk.js)",
+      "Bash(node --check /tmp/_wp_chk.js)",
+      "Bash(node --check /tmp/_wp2_chk.js)"
     ],
     "additionalDirectories": [
       "/tmp",

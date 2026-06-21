@@ -467,6 +467,20 @@ body::after {
       </div>
     </a>
 
+    <!-- Small tile -->
+    <a class="tile" href="wochenplan.html" style="--accent:#7DD3FC">
+      <div class="tile-top">
+        <span class="tile-num">·08</span>
+        <span class="tile-emoji">📅</span>
+      </div>
+      <div class="tile-spacer"></div>
+      <h2 class="tile-title">Wochenplan</h2>
+      <div class="tile-foot">
+        <span class="tile-sub" id="wochenplanSub">Kein Training heute</span>
+        <span class="tile-arrow">→</span>
+      </div>
+    </a>
+
   </div>
 </div>
 
@@ -1292,9 +1306,30 @@ body::after {
     el.textContent = firstLine;
   }
 
+  function itemDateTime(it) {
+    return new Date(it.date + 'T' + (it.time || '00:00') + ':00');
+  }
+  function renderWochenplanTile() {
+    const el = $('wochenplanSub');
+    if (!el) return;
+    const items = loadJSON('wochenplan:items', []);
+    const list = (Array.isArray(items) ? items : []).filter((it) => it && it.date && it.activity);
+    const today = activeDateKey();
+
+    const todayTraining = list.find((it) => it.date === today && it.type === 'training');
+    const trainingText = todayTraining ? todayTraining.activity : 'Kein Training heute';
+
+    const now = new Date();
+    const upcoming = list.filter((it) => itemDateTime(it) >= now).sort((a, b) => itemDateTime(a) - itemDateTime(b));
+    const nextText = upcoming.length ? ('Nächste: ' + upcoming[0].activity) : 'Keine weitere Aktivität';
+
+    el.textContent = trainingText + ' · ' + nextText;
+  }
+
   renderAufgabenTile();
   renderFutureSelfTile();
-  window.addEventListener('storage', () => { renderAufgabenTile(); renderFutureSelfTile(); });
+  renderWochenplanTile();
+  window.addEventListener('storage', () => { renderAufgabenTile(); renderFutureSelfTile(); renderWochenplanTile(); });
 })();
 </script>
 <div style="position:fixed; bottom:10px; right:14px; font-family:var(--font-mono); font-size:10px; opacity:0.3; pointer-events:none;">DASHBOARD v2</div>

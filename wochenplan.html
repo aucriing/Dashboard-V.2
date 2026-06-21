@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script>
+window.onerror = function (msg, src, line) {
+  console.error('[Error]', msg, line);
+  return true;
+};
+window.onunhandledrejection = function (e) {
+  console.error('[Promise]', e.reason);
+  e.preventDefault();
+};
+</script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Wochenplan · Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="topbar.js" defer></script>
+
+<style>
+/* ===== Shared design tokens (same as the rest of the dashboard) ===== */
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --border-strong: rgba(255,255,255,0.12);
+  --bg-input: rgba(0,0,0,0.28);
+  --bg-input-focus: rgba(0,0,0,0.36);
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #050506;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body {
+  min-height: 100vh; position: relative; overflow-x: hidden;
+  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
+}
+/* Soft drifting glow + dot texture (matches the other pages). */
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(224,118,88,0.16), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(180,180,200,0.06), transparent 50%);
+  filter: blur(40px); pointer-events: none; z-index: -2;
+  animation: drift 36s ease-in-out infinite alternate;
+}
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px; pointer-events: none; z-index: -1;
+}
+@keyframes drift { 0%{transform:translate3d(0,0,0)} 100%{transform:translate3d(-22px,14px,0)} }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.page { max-width: 1500px; margin: 0 auto; }
+
+.back-link {
+  position: fixed; top: 16px; left: 16px; z-index: 100;
+  font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600;
+  letter-spacing: 0.1em; color: #f5a623; opacity: 0.7; cursor: pointer;
+  text-decoration: none; transition: opacity 0.15s;
+}
+.back-link:hover { opacity: 1; }
+
+/* ===== Header ===== */
+.wp-header-row {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 14px;
+  margin: 40px 0 20px;
+}
+.wp-title {
+  margin: 0;
+  font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+  letter-spacing: 0.04em; color: #f5a623;
+}
+@media (max-width: 480px) { .wp-title { font-size: 17px; } }
+
+.wp-season-toggle { display: inline-flex; border: 1px solid rgba(255,255,255,0.10); border-radius: 11px; overflow: hidden; }
+.wp-season-btn {
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  padding: 9px 14px; cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.wp-season-btn.on { background: rgba(245,158,11,0.16); color: #f5a623; }
+.wp-season-btn:hover:not(.on) { color: var(--text-secondary); }
+
+/* ===== Board ===== */
+.wp-board {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+}
+@media (max-width: 900px) {
+  .wp-board { grid-template-columns: 1fr; }
+}
+
+.wp-day {
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.wp-day.today {
+  border-color: rgba(245,158,11,0.55);
+  box-shadow: 0 0 0 1px rgba(245,158,11,0.18), 0 0 24px rgba(245,158,11,0.12);
+  background: rgba(245,158,11,0.08);
+}
+
+.wp-day-header { text-align: center; margin-bottom: 10px; }
+.wp-day-label {
+  display: block;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-primary);
+}
+.wp-day.today .wp-day-label { color: #f5a623; }
+.wp-day-date {
+  display: block; font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-tertiary); margin-top: 2px;
+}
+
+.wp-timeline {
+  position: relative;
+  height: 880px;
+  border-left: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 10px;
+}
+@media (max-width: 900px) { .wp-timeline { height: 600px; } }
+
+.wp-entry {
+  position: absolute;
+  left: 4px; right: 0;
+  min-height: 26px;
+  display: flex; align-items: center; gap: 6px;
+  flex-wrap: wrap;
+  padding: 3px 8px;
+  border-left: 3px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.035);
+  border-radius: 0 6px 6px 0;
+  overflow: hidden;
+}
+.wp-entry:hover { background: rgba(255,255,255,0.07); overflow: visible; z-index: 5; }
+.wp-entry-time {
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 700;
+  color: #f5a623; white-space: nowrap; flex-shrink: 0;
+}
+.wp-entry-activity {
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--text-primary);
+  line-height: 1.3; min-width: 0;
+}
+.wp-entry-hint {
+  font-size: 9px; font-style: italic; color: var(--text-tertiary);
+  flex-basis: 100%;
+}
+.wp-entry-edit, .wp-entry-del {
+  margin-left: auto; flex-shrink: 0;
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-size: 11px; cursor: pointer; padding: 2px 4px; border-radius: 6px;
+  opacity: 0; transition: opacity 0.15s, color 0.15s;
+}
+.wp-entry:hover .wp-entry-edit, .wp-entry:hover .wp-entry-del { opacity: 1; }
+.wp-entry-edit:hover { color: var(--text-primary); }
+.wp-entry-del:hover { color: #FF6B6B; }
+
+.wp-now-line {
+  position: absolute; left: 0; right: 0; height: 0;
+  border-top: 2px solid #ef4444;
+  box-shadow: 0 0 8px rgba(239,68,68,0.6);
+  z-index: 4; pointer-events: none;
+}
+.wp-now-line::before {
+  content: ''; position: absolute; left: -4px; top: -3px;
+  width: 6px; height: 6px; border-radius: 50%; background: #ef4444;
+}
+
+.wp-add-entry-btn {
+  border: 1px solid rgba(245,158,11,0.45);
+  background: rgba(245,158,11,0.10);
+  color: #f5a623;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 8px; border-radius: 8px; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.wp-add-entry-btn:hover { background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.65); }
+
+/* ===== Add/Edit entry modal ===== */
+.modal-bg {
+  position: fixed; inset: 0; z-index: 200; display: none;
+  align-items: center; justify-content: center; padding: 20px;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.modal-bg.show { display: flex; }
+.modal-box {
+  width: 100%; max-width: 420px;
+  background: #0e0e10; border: 1px solid var(--border-strong);
+  border-radius: 18px; padding: 22px; box-shadow: 0 24px 70px rgba(0,0,0,0.6);
+}
+.modal-box-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.modal-box-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.modal-box-close { border: 0; background: transparent; color: var(--text-tertiary); font-size: 24px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.modal-box-close:hover { color: var(--text-primary); }
+.bg-field { margin-bottom: 12px; }
+.bg-field label {
+  display: block; font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px;
+}
+.bg-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.bg-field-row .bg-field { margin-bottom: 0; }
+.bg-input {
+  width: 100%; font-size: 13px; padding: 9px 11px; border-radius: 10px;
+  border: 1px solid var(--border-strong); background: var(--bg-input); color: var(--text-primary);
+  font-family: inherit; transition: border-color 0.18s, background 0.18s;
+}
+.bg-input:focus { outline: none; border-color: rgba(255,255,255,0.40); background: var(--bg-input-focus); }
+.bg-select { cursor: pointer; }
+.modal-submit-btn {
+  width: 100%; margin-top: 6px; padding: 11px;
+  border: 1px solid rgba(245,158,11,0.45); border-radius: 10px;
+  background: rgba(245,158,11,0.10); color: #f5a623;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.modal-submit-btn:hover { background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.65); }
+
+@media (max-width: 480px) {
+  .bg-field-row { grid-template-columns: 1fr; }
+  input, select, textarea { font-size: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <a href="index.html" class="back-link" id="backLink">← Dashboard</a>
+  <div id="sync-dot" style="position:fixed; top:14px; right:14px; width:8px; height:8px; border-radius:50%; background:#22c55e; z-index:999;"></div>
+
+  <div class="wp-header-row">
+    <h1 class="wp-title">📅 WOCHENPLAN</h1>
+    <div class="wp-season-toggle" id="seasonToggle">
+      <button type="button" class="wp-season-btn" data-season="summer">☀️ Sommer</button>
+      <button type="button" class="wp-season-btn" data-season="winter">❄️ Winter</button>
+    </div>
+  </div>
+
+  <div class="wp-board" id="wpBoard"></div>
+
+</div>
+
+<div class="modal-bg" id="entryModalBg">
+  <div class="modal-box" role="dialog" aria-label="Eintrag">
+    <div class="modal-box-head">
+      <span class="modal-box-title" id="entryModalTitle">+ Eintrag</span>
+      <button type="button" class="modal-box-close" id="entryModalClose">×</button>
+    </div>
+    <div class="bg-field-row">
+      <div class="bg-field"><label>Von</label><input type="time" id="entryTimeStart" class="bg-input"></div>
+      <div class="bg-field"><label>Bis (optional)</label><input type="time" id="entryTimeEnd" class="bg-input"></div>
+    </div>
+    <div class="bg-field">
+      <label>Aktivität</label>
+      <input type="text" id="entryActivity" class="bg-input" placeholder="z. B. Lesen" autocomplete="off">
+    </div>
+    <div class="bg-field">
+      <label>Kategorie</label>
+      <select id="entryCategory" class="bg-input bg-select">
+        <option value="workout">🏋️ Workout/Sport</option>
+        <option value="schule">🏫 Schule</option>
+        <option value="essen">🍽️ Essen</option>
+        <option value="lernen">📚 Lernen</option>
+        <option value="videos">🎬 Videos</option>
+        <option value="schlafen">😴 Schlafen</option>
+        <option value="schwimmen">🌊 Schwimmen</option>
+        <option value="ringen">🥊 Boxen/Ringen</option>
+        <option value="sonstiges">✨ Sonstiges</option>
+      </select>
+    </div>
+    <button type="button" class="modal-submit-btn" id="entrySubmitBtn">Speichern</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  /* ---------- Weekday model (6 AM active-date rollover, same as the rest of the dashboard) ---------- */
+  const WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const WEEKDAY_LABELS = { monday: 'MO', tuesday: 'DI', wednesday: 'MI', thursday: 'DO', friday: 'FR', saturday: 'SA', sunday: 'SO' };
+  const WEEKDAY_FULL = { monday: 'Montag', tuesday: 'Dienstag', wednesday: 'Mittwoch', thursday: 'Donnerstag', friday: 'Freitag', saturday: 'Samstag', sunday: 'Sonntag' };
+
+  function activeNow() {
+    const now = new Date();
+    if (now.getHours() < 6) now.setDate(now.getDate() - 1);
+    return now;
+  }
+  function todayKey() {
+    const dow = activeNow().getDay(); // 0=Sun..6=Sat
+    return WEEKDAYS[(dow + 6) % 7]; // 0=Mon..6=Sun
+  }
+  function mondayOfThisWeek() {
+    const now = activeNow();
+    const dow = now.getDay();
+    const offset = dow === 0 ? -6 : 1 - dow;
+    const monday = new Date(now);
+    monday.setDate(monday.getDate() + offset);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  }
+  function dateLabelForDay(idx) {
+    const d = new Date(mondayOfThisWeek());
+    d.setDate(d.getDate() + idx);
+    return String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.';
+  }
+
+  /* ---------- Categories ---------- */
+  const CATEGORIES = {
+    workout:   { emoji: '🏋️', color: '#22c55e' },
+    schule:    { emoji: '🏫', color: '#3b82f6' },
+    essen:     { emoji: '🍽️', color: '#f59e0b' },
+    lernen:    { emoji: '📚', color: '#8b5cf6' },
+    videos:    { emoji: '🎬', color: '#ef4444' },
+    schlafen:  { emoji: '😴', color: '#6b7280' },
+    schwimmen: { emoji: '🌊', color: '#06b6d4' },
+    ringen:    { emoji: '🥊', color: '#f97316' },
+    sonstiges: { emoji: '✨', color: 'rgba(255,255,255,0.22)' },
+  };
+  const SPORT_CATEGORIES = ['workout', 'schwimmen', 'ringen'];
+  const SEASON_HINTS = {
+    summer: 'Sommer: möglichst früh morgens oder abends',
+    winter: 'Winter: Sport flexibler (bereits im Plan berücksichtigt)',
+  };
+
+  /* ---------- Fixed weekly schedule ---------- */
+  const FIXED_SCHEDULE = {
+    monday: [
+      { time: '06:00', end: null, activity: 'Aufwachen', category: 'schlafen' },
+      { time: '06:15', end: '07:00', activity: 'Kellerworkout (Kraft)', category: 'workout' },
+      { time: '08:00', end: '13:00', activity: 'Schule', category: 'schule' },
+      { time: '13:00', end: '14:00', activity: 'Mittagessen + Pause', category: 'essen' },
+      { time: '14:00', end: '16:00', activity: 'Lernen / Videos cutten', category: 'lernen' },
+      { time: '19:30', end: '21:00', activity: 'Ringen Training', category: 'ringen' },
+      { time: '22:00', end: '22:30', activity: 'Schlafen gehen', category: 'schlafen' },
+    ],
+    tuesday: [
+      { time: '06:00', end: null, activity: 'Aufwachen', category: 'schlafen' },
+      { time: '06:30', end: '07:30', activity: 'Freibad schwimmen', category: 'schwimmen' },
+      { time: '08:00', end: '13:00', activity: 'Schule', category: 'schule' },
+      { time: '13:00', end: '14:00', activity: 'Mittagessen', category: 'essen' },
+      { time: '14:00', end: '17:00', activity: 'Lernen / Videos cutten', category: 'lernen' },
+      { time: '17:00', end: '18:00', activity: '5km Joggen (früh Abend, nicht zu heiß)', category: 'workout' },
+      { time: '22:00', end: '22:30', activity: 'Schlafen gehen', category: 'schlafen' },
+    ],
+    wednesday: [
+      { time: '06:00', end: null, activity: 'Aufwachen', category: 'schlafen' },
+      { time: '06:15', end: '07:00', activity: 'Kellerworkout (Kraft)', category: 'workout' },
+      { time: '08:00', end: '13:00', activity: 'Schule', category: 'schule' },
+      { time: '13:00', end: '14:00', activity: 'Mittagessen', category: 'essen' },
+      { time: '14:00', end: '17:00', activity: 'Lernen / Videos cutten', category: 'lernen' },
+      { time: '19:00', end: '20:30', activity: 'Boxtraining', category: 'ringen' },
+      { time: '22:00', end: '22:30', activity: 'Schlafen gehen', category: 'schlafen' },
+    ],
+    thursday: [
+      { time: '06:00', end: null, activity: 'Aufwachen', category: 'schlafen' },
+      { time: '06:15', end: '07:00', activity: 'Kellerworkout (leicht — Abend ist Ringen)', category: 'workout' },
+      { time: '08:00', end: '15:30', activity: 'Schule (bis 15:30)', category: 'schule' },
+      { time: '15:30', end: '16:30', activity: 'Essen + Pause', category: 'essen' },
+      { time: '16:30', end: '18:30', activity: 'Lernen / Videos cutten', category: 'lernen' },
+      { time: '19:30', end: '21:00', activity: 'Ringen Training', category: 'ringen' },
+      { time: '22:00', end: '22:30', activity: 'Schlafen gehen', category: 'schlafen' },
+    ],
+    friday: [
+      { time: '06:00', end: null, activity: 'Aufwachen', category: 'schlafen' },
+      { time: '06:15', end: '07:00', activity: '5km Joggen (morgens, kühl)', category: 'workout' },
+      { time: '08:00', end: '13:00', activity: 'Schule', category: 'schule' },
+      { time: '13:00', end: '14:00', activity: 'Mittagessen', category: 'essen' },
+      { time: '14:00', end: '18:00', activity: 'Lernen / Videos cutten / Freizeit', category: 'lernen' },
+      { time: '22:00', end: '22:30', activity: 'Schlafen gehen', category: 'schlafen' },
+    ],
+    saturday: [
+      { time: '06:00', end: null, activity: 'Aufwachen', category: 'schlafen' },
+      { time: '06:30', end: '07:30', activity: 'Freibad schwimmen', category: 'schwimmen' },
+      { time: '08:00', end: '12:00', activity: 'Videos cutten / Projekte', category: 'videos' },
+      { time: '12:00', end: '13:00', activity: 'Mittagessen', category: 'essen' },
+      { time: '13:00', end: '17:00', activity: 'Freizeit / Erholung', category: 'sonstiges' },
+      { time: '22:00', end: '22:30', activity: 'Schlafen gehen', category: 'schlafen' },
+    ],
+    sunday: [
+      { time: '07:00', end: null, activity: 'Aufwachen (1 Stunde länger)', category: 'schlafen' },
+      { time: '09:00', end: '11:00', activity: 'Kellerworkout (Kraft)', category: 'workout' },
+      { time: '11:00', end: '12:00', activity: 'Frühstück / Pause', category: 'essen' },
+      { time: '12:00', end: '16:00', activity: 'Videos cutten / Lernen / Vorbereitung Woche', category: 'lernen' },
+      { time: '16:00', end: '18:00', activity: 'Freizeit', category: 'sonstiges' },
+      { time: '22:00', end: '22:30', activity: 'Schlafen gehen', category: 'schlafen' },
+    ],
+  };
+
+  /* ---------- Custom entries ---------- */
+  const CUSTOM_KEY = 'wochenplan-custom';
+  function loadCustom() { const l = loadJSON(CUSTOM_KEY, []); return Array.isArray(l) ? l : []; }
+  function saveCustom(list) { localStorage.setItem(CUSTOM_KEY, JSON.stringify(list)); }
+  function deleteCustomEntry(id) {
+    if (!confirm('Eintrag löschen?')) return;
+    saveCustom(loadCustom().filter((it) => it.id !== id));
+    renderBoard();
+  }
+
+  /* ---------- Season toggle ---------- */
+  const SEASON_KEY = 'wochenplan-season';
+  function loadSeason() { return localStorage.getItem(SEASON_KEY) === 'winter' ? 'winter' : 'summer'; }
+  function saveSeason(s) { localStorage.setItem(SEASON_KEY, s); }
+  let currentSeason = loadSeason();
+
+  function syncSeasonButtons() {
+    document.querySelectorAll('.wp-season-btn').forEach((btn) => {
+      btn.classList.toggle('on', btn.dataset.season === currentSeason);
+    });
+  }
+  document.querySelectorAll('.wp-season-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      currentSeason = btn.dataset.season;
+      saveSeason(currentSeason);
+      syncSeasonButtons();
+      renderBoard();
+    });
+  });
+
+  /* ---------- Timeline math ---------- */
+  const DAY_START_MIN = 6 * 60;
+  const DAY_END_MIN = 23 * 60;
+  const DAY_SPAN_MIN = DAY_END_MIN - DAY_START_MIN;
+
+  function timeToMinutes(t) {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }
+  function minutesToPercent(mins) {
+    const clamped = Math.min(DAY_END_MIN, Math.max(DAY_START_MIN, mins));
+    return ((clamped - DAY_START_MIN) / DAY_SPAN_MIN) * 100;
+  }
+
+  /* ---------- Add/Edit entry modal ---------- */
+  const entryModalBg = $('entryModalBg');
+  let modalDay = null;
+  let editingEntryId = null;
+
+  function openEntryModal(day, existing) {
+    modalDay = day;
+    editingEntryId = existing ? existing.id : null;
+    $('entryModalTitle').textContent = existing ? '✏️ Eintrag bearbeiten' : '+ Eintrag · ' + WEEKDAY_FULL[day];
+    $('entryTimeStart').value = existing ? existing.time : '';
+    $('entryTimeEnd').value = existing && existing.end ? existing.end : '';
+    $('entryActivity').value = existing ? existing.activity : '';
+    $('entryCategory').value = existing ? existing.category : 'sonstiges';
+    entryModalBg.classList.add('show');
+    $('entryTimeStart').focus();
+  }
+  function closeEntryModal() { entryModalBg.classList.remove('show'); }
+
+  $('entryModalClose').addEventListener('click', closeEntryModal);
+  entryModalBg.addEventListener('click', (e) => { if (e.target === entryModalBg) closeEntryModal(); });
+
+  $('entrySubmitBtn').addEventListener('click', () => {
+    const time = $('entryTimeStart').value;
+    const activity = $('entryActivity').value.trim();
+    if (!time || !activity) return;
+    const end = $('entryTimeEnd').value || null;
+    const category = $('entryCategory').value;
+    const list = loadCustom();
+    if (editingEntryId) {
+      const item = list.find((it) => it.id === editingEntryId);
+      if (item) { item.time = time; item.end = end; item.activity = activity; item.category = category; }
+    } else {
+      list.push({ id: 'c' + Date.now() + Math.random().toString(36).slice(2, 6), day: modalDay, time, end, activity, category });
+    }
+    saveCustom(list);
+    closeEntryModal();
+    renderBoard();
+  });
+
+  /* ---------- Rendering ---------- */
+  function buildEntryBlock(entry) {
+    const cat = CATEGORIES[entry.category] || CATEGORIES.sonstiges;
+    const startMin = timeToMinutes(entry.time);
+    const top = minutesToPercent(startMin);
+
+    const block = document.createElement('div');
+    block.className = 'wp-entry';
+    block.style.top = top + '%';
+    block.style.borderLeftColor = cat.color;
+    if (entry.end) {
+      const bottom = minutesToPercent(timeToMinutes(entry.end));
+      block.style.height = Math.max(bottom - top, 2.4) + '%';
+    } else {
+      block.style.height = '26px';
+    }
+
+    const timeLabel = entry.end ? entry.time + '–' + entry.end : entry.time;
+    let html = '<span class="wp-entry-time">' + timeLabel + '</span>' +
+               '<span class="wp-entry-activity">' + cat.emoji + ' ' + escapeHtml(entry.activity) + '</span>';
+    if (SPORT_CATEGORIES.indexOf(entry.category) !== -1) {
+      html += '<span class="wp-entry-hint">' + SEASON_HINTS[currentSeason] + '</span>';
+    }
+    if (entry.custom) {
+      html += '<button type="button" class="wp-entry-edit" aria-label="Bearbeiten">✏️</button>' +
+              '<button type="button" class="wp-entry-del" aria-label="Löschen">✕</button>';
+    }
+    block.innerHTML = html;
+
+    if (entry.custom) {
+      block.querySelector('.wp-entry-edit').addEventListener('click', (e) => { e.stopPropagation(); openEntryModal(entry.day, entry); });
+      block.querySelector('.wp-entry-del').addEventListener('click', (e) => { e.stopPropagation(); deleteCustomEntry(entry.id); });
+    }
+    return block;
+  }
+
+  function renderBoard() {
+    const board = $('wpBoard');
+    board.innerHTML = '';
+    const today = todayKey();
+    const custom = loadCustom();
+
+    WEEKDAYS.forEach((day, idx) => {
+      const col = document.createElement('div');
+      col.className = 'wp-day' + (day === today ? ' today' : '');
+
+      const header = document.createElement('div');
+      header.className = 'wp-day-header';
+      header.innerHTML = '<span class="wp-day-label">' + WEEKDAY_LABELS[day] + '</span>' +
+                          '<span class="wp-day-date">' + dateLabelForDay(idx) + '</span>';
+      col.appendChild(header);
+
+      const timeline = document.createElement('div');
+      timeline.className = 'wp-timeline';
+
+      const entries = FIXED_SCHEDULE[day].map((e) => Object.assign({ custom: false }, e))
+        .concat(custom.filter((c) => c.day === day).map((c) => Object.assign({ custom: true }, c)))
+        .sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+
+      entries.forEach((entry) => timeline.appendChild(buildEntryBlock(entry)));
+
+      if (day === today) {
+        const nowLine = document.createElement('div');
+        nowLine.className = 'wp-now-line';
+        nowLine.id = 'wpNowLine';
+        timeline.appendChild(nowLine);
+      }
+
+      col.appendChild(timeline);
+
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'wp-add-entry-btn';
+      addBtn.textContent = '+ Eintrag';
+      addBtn.addEventListener('click', () => openEntryModal(day, null));
+      col.appendChild(addBtn);
+
+      board.appendChild(col);
+    });
+
+    updateNowLine();
+  }
+
+  function updateNowLine() {
+    const line = $('wpNowLine');
+    if (!line) return;
+    const now = new Date();
+    line.style.top = minutesToPercent(now.getHours() * 60 + now.getMinutes()) + '%';
+  }
+
+  syncSeasonButtons();
+  renderBoard();
+  setInterval(updateNowLine, 60 * 1000);
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+  function goBackToDashboard() {
+    document.body.style.transition = 'opacity 150ms ease';
+    document.body.style.opacity = '0';
+    setTimeout(() => { window.location.href = 'index.html'; }, 150);
+  }
+  const backLinkEl = document.getElementById('backLink');
+  if (backLinkEl) backLinkEl.addEventListener('click', (e) => { e.preventDefault(); goBackToDashboard(); });
+
+  function setSyncDot(state) {
+    const dot = document.getElementById('sync-dot');
+    if (!dot) return;
+    dot.style.background = state === 'red' ? '#ef4444' : '#22c55e';
+    dot.style.animation = state === 'red' ? 'pulse 1s infinite' : 'none';
+  }
+  window.addEventListener('online', () => setSyncDot('green'));
+  window.addEventListener('offline', () => setSyncDot('red'));
+  setSyncDot(navigator.onLine ? 'green' : 'red');
+})();
+</script>
+</body>
+</html>
