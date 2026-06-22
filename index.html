@@ -25,6 +25,108 @@ try { localStorage.removeItem('whoop_tokens_v1'); localStorage.removeItem('whoop
 <script src="topbar.js" defer></script>
 
 <style>
+/* ===== Global premium polish (shared across all pages) ===== */
+/* Reset Overlap */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+body {
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Premium Cards */
+.card, [class*="card"], [class*="widget"] {
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+  transition: all 0.2s cubic-bezier(0.16,1,0.32,1);
+}
+.card:hover {
+  border-color: rgba(245,158,11,0.2);
+  box-shadow: 0 0 24px rgba(245,158,11,0.06);
+  transform: translateY(-1px);
+}
+
+/* Premium Buttons */
+button, [role="button"] {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+button:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+/* Amber Accent überall */
+::selection { background: rgba(245,158,11,0.3); }
+:focus-visible {
+  outline: 2px solid rgba(245,158,11,0.6);
+  outline-offset: 2px;
+}
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(245,158,11,0.3);
+  border-radius: 2px;
+}
+
+/* Animationen */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeOut {
+  to { opacity: 0; transform: translateX(12px); }
+}
+.item-new { animation: slideIn 0.3s cubic-bezier(0.16,1,0.32,1); }
+.item-removing { animation: fadeOut 0.2s ease forwards; }
+
+/* Section Entry */
+.section, main, [class*="content"] {
+  animation: fadeIn 0.25s cubic-bezier(0.16,1,0.32,1);
+}
+
+/* Modal Premium */
+[class*="modal"], [class*="overlay"] {
+  backdrop-filter: blur(12px);
+  animation: fadeIn 0.2s ease;
+}
+[class*="modal"] > div {
+  animation: fadeIn 0.25s cubic-bezier(0.16,1,0.32,1);
+}
+
+/* Mobile — kein Overlap */
+@media (max-width: 768px) {
+  body { padding: 12px; padding-bottom: 80px; }
+  .grid, [class*="grid"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  [class*="modal"] > div {
+    width: calc(100vw - 24px) !important;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  button { min-height: 44px; }
+  nav, [class*="nav"], [class*="bottom"] {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+/* ===== End global premium polish ===== */
+
+
 /* ===== Shared design tokens (same as the rest of the dashboard) ===== */
 :root {
   --text-primary: #FAFAFA;
@@ -266,12 +368,12 @@ body::after {
 </style>
 </head>
 <body>
+<div id="sync-dot" style="position:fixed; top:14px; right:14px; width:8px; height:8px; border-radius:50%; background:#22c55e; z-index:9999; transition: background 0.3s ease;"></div>
 <div class="page">
 
   <div class="hub-head">
     <div class="hub-head-left">
       <h1 class="dash-title">Daniels Dashboard v2</h1>
-      <div id="sync-dot" style="position:fixed; top:14px; right:14px; width:8px; height:8px; border-radius:50%; background:#22c55e; z-index:999;"></div>
     </div>
     <button class="gear-btn" id="settingsOpen" type="button" aria-label="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
