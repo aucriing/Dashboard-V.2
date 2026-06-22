@@ -36,7 +36,10 @@
       "Bash(node --check /tmp/_idx2_chk.js)",
       "Bash(node --check /tmp/_idx3_chk.js)",
       "Bash(node --check /tmp/_wp_chk.js)",
-      "Bash(node --check /tmp/_wp2_chk.js)"
+      "Bash(node --check /tmp/_wp2_chk.js)",
+      "Bash(grep -n \"const bg = \\\\$\\('overviewBg'\\)\" index.html)",
+      "Bash(node --check /tmp/_idx4_chk.js)",
+      "Bash(node --check sync.js)"
     ],
     "additionalDirectories": [
       "/tmp",

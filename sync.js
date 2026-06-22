@@ -1,169 +1,176 @@
 // =============================================================
-// Shared cloud-sync helper for the dashboard.
-// Each page calls initCloudSync({...}) once with its config:
-//   appKey         — string row key in the public.app_state table
-//   syncedKeys     — exact localStorage keys to mirror
-//   syncedPrefixes — localStorage key prefixes to mirror (e.g. 'goals:')
-//   onApplied      — optional callback after remote state has been applied
+// Supabase cloud sync — mirrors this dashboard's data to a single
+// shared `user_data` table (columns: user_id, key, value, updated_at)
+// so every device signed into the same dashboard sees the same data.
 //
 // Requires:
 //   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 //   <script src="sync.js" defer></script>
+//
+// Reads Supabase credentials from the 'settings-api' localStorage
+// object ({ supabaseUrl, supabaseKey, ... }) set via the dashboard's
+// Settings modal.
 // =============================================================
 (function () {
   'use strict';
 
-  // Prefer Vercel env vars (served via /api/config → window.DASH_*),
-  // otherwise fall back to these defaults.
-  const SUPABASE_URL = (typeof window !== 'undefined' && window.DASH_SUPABASE_URL) || 'https://srajryooffirbroltjmg.supabase.co';
-  const SUPABASE_KEY = (typeof window !== 'undefined' && window.DASH_SUPABASE_KEY) || 'sb_publishable_5142ZwTLF_DkSVRzciNuRA_bHwRAu4c';
+  // Shared across every device — NOT per-device, so phone/laptop/etc.
+  // all read and write the same rows and actually sync with each other.
+  const USER_ID = 'daniel';
 
-  window.initCloudSync = function (config) {
-    const appKey = config && config.appKey;
-    const syncedKeys = (config && config.syncedKeys) || [];
-    const syncedPrefixes = (config && config.syncedPrefixes) || [];
-    const onApplied = config && config.onApplied;
-    if (!appKey) return;
-    if (!window.supabase) return;
-    if (!SUPABASE_URL || !SUPABASE_KEY) return;
-    if (SUPABASE_URL.indexOf('PASTE-') === 0 || SUPABASE_KEY.indexOf('PASTE-') === 0) return;
+  // Exact localStorage keys to mirror.
+  const SYNC_EXACT_KEYS = [
+    'body-goal',
+    'future-self-profile',
+    'wochenplan-custom',
+    'settings-api',
+    'settings-notifications',
+  ];
+  // localStorage key prefixes to mirror (covers the date/id-suffixed
+  // keys actually used across the dashboard's pages).
+  const SYNC_KEY_PREFIXES = [
+    'tasks-',            // tasks-{date}, tasks-all (main.html / tasks.html Kanban)
+    'routines:',         // routines:items, routines:done:{date}
+    'stack:',            // stack:items, stack:taken:{date}, stack:version, stack:low
+    'future-self-',      // future-self-{date} daily brief cache
+    'journal:',          // journal:{date}
+    'journal-insights-', // journal-insights-{date}
+    'weekly-review-',    // weekly-review-{ISO week}
+    'ki-analyse-',       // ki-analyse-{date}
+    'traumplan-',        // traumplan-3, traumplan-6, traumplan-12
+  ];
 
-    let supa = null;
-    let pushTimer = null;
-    let suppressSync = false;
-    let lastSyncedJson = null;
-
-    function matches(k) {
-      if (!k) return false;
-      if (syncedKeys.indexOf(k) !== -1) return true;
-      for (let i = 0; i < syncedPrefixes.length; i++) {
-        if (k.indexOf(syncedPrefixes[i]) === 0) return true;
-      }
-      return false;
+  function matchesSyncKey(key) {
+    if (!key) return false;
+    if (SYNC_EXACT_KEYS.indexOf(key) !== -1) return true;
+    for (let i = 0; i < SYNC_KEY_PREFIXES.length; i++) {
+      if (key.indexOf(SYNC_KEY_PREFIXES[i]) === 0) return true;
     }
-    function listAllKeys() {
-      const out = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (matches(k)) out.push(k);
-      }
-      return out;
+    return false;
+  }
+  function listSyncedKeys() {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (matchesSyncKey(k)) out.push(k);
     }
-    function collect() {
-      const out = {};
-      for (const k of listAllKeys()) {
-        const v = localStorage.getItem(k);
-        if (v == null) continue;
-        try { out[k] = JSON.parse(v); } catch (e) { out[k] = v; }
-      }
-      return out;
+    return out;
+  }
+
+  /* ---------- sync dot ---------- */
+  function setSyncDot(status) {
+    const dot = document.getElementById('sync-dot');
+    if (!dot) return;
+    if (status === 'synced') {
+      dot.style.background = '#22c55e';
+      dot.style.animation = 'none';
+    } else if (status === 'syncing') {
+      dot.style.background = '#f5a623';
+      dot.style.animation = 'pulse 1s infinite';
+    } else {
+      dot.style.background = '#ef4444';
+      dot.style.animation = 'pulse 0.5s infinite';
     }
+  }
 
-    const origSet = localStorage.setItem.bind(localStorage);
-    const origRemove = localStorage.removeItem.bind(localStorage);
-    localStorage.setItem = function (k, v) {
-      origSet(k, v);
-      try { if (!suppressSync && matches(k)) schedulePush(); } catch (e) {}
-    };
-    localStorage.removeItem = function (k) {
-      origRemove(k);
-      try { if (!suppressSync && matches(k)) schedulePush(); } catch (e) {}
-    };
+  /* ---------- Supabase client ---------- */
+  function getSupabaseClient() {
+    let settings;
+    try { settings = JSON.parse(localStorage.getItem('settings-api') || '{}'); } catch (e) { settings = {}; }
+    if (!settings.supabaseUrl || !settings.supabaseKey) return null;
+    if (typeof supabase === 'undefined') return null;
+    if (window._sb) return window._sb;
+    window._sb = supabase.createClient(
+      settings.supabaseUrl,
+      settings.supabaseKey,
+      { auth: { persistSession: true, autoRefreshToken: true } }
+    );
+    return window._sb;
+  }
 
-    function applyRemote(remote) {
-      if (!remote || typeof remote !== 'object') return false;
-      suppressSync = true;
-      let changed = false;
-      try {
-        for (const k of Object.keys(remote)) {
-          if (!matches(k)) continue;
-          const incoming = JSON.stringify(remote[k]);
-          const local = localStorage.getItem(k);
-          if (local !== incoming) {
-            try { origSet(k, incoming); changed = true; } catch (e) {}
-          }
+  /* ---------- last-write-wins bookkeeping ----------
+     Real localStorage values don't carry an `_updated` timestamp, so
+     instead of trusting one, we record when THIS device last pushed
+     successfully. On pull, a remote row only overwrites the local
+     value if it was written (by some device) after that — i.e. it's
+     genuinely newer than anything we've already synced. */
+  const LAST_PUSH_KEY = 'sync-last-push-at';
+  function getLastPushTime() { return Number(localStorage.getItem(LAST_PUSH_KEY)) || 0; }
+  function setLastPushTime(ts) { try { localStorage.setItem(LAST_PUSH_KEY, String(ts)); } catch (e) {} }
+
+  /* ---------- push: every 30 seconds ---------- */
+  async function syncPush() {
+    const sb = getSupabaseClient();
+    if (!sb) return;
+    setSyncDot('syncing');
+    const now = new Date().toISOString();
+    try {
+      for (const key of listSyncedKeys()) {
+        const value = localStorage.getItem(key);
+        if (value === null) continue;
+        await sb.from('user_data').upsert({
+          user_id: USER_ID,
+          key,
+          value,
+          updated_at: now,
+        }, { onConflict: 'user_id,key' });
+      }
+      setLastPushTime(Date.now());
+      setSyncDot('synced');
+    } catch (e) {
+      setSyncDot('offline');
+    }
+  }
+
+  /* ---------- pull: on load ---------- */
+  async function syncPull() {
+    const sb = getSupabaseClient();
+    if (!sb) return;
+    const lastPush = getLastPushTime();
+    try {
+      const { data } = await sb
+        .from('user_data')
+        .select('*')
+        .eq('user_id', USER_ID);
+      if (!data) return;
+      data.forEach((row) => {
+        if (!matchesSyncKey(row.key)) return;
+        const remoteTime = new Date(row.updated_at).getTime();
+        if (remoteTime > lastPush) {
+          localStorage.setItem(row.key, row.value);
         }
-        for (const k of listAllKeys()) {
-          if (!(k in remote)) {
-            try { origRemove(k); changed = true; } catch (e) {}
-          }
-        }
-      } finally { suppressSync = false; }
-      if (changed && typeof onApplied === 'function') {
-        try { onApplied(); } catch (e) {}
-      }
-      return changed;
-    }
+      });
+    } catch (e) {}
+  }
 
-    async function pushNow() {
-      if (!supa) return;
-      const state = collect();
-      const json = JSON.stringify(state);
-      if (json === lastSyncedJson) return;
-      try {
-        const { error } = await supa.from('app_state').upsert(
-          { key: appKey, data: state, updated_at: new Date().toISOString() },
-          { onConflict: 'key' }
-        );
-        if (!error) lastSyncedJson = json;
-      } catch (e) {}
-    }
-    function schedulePush() {
-      clearTimeout(pushTimer);
-      pushTimer = setTimeout(pushNow, 250);
-    }
-    function flushOnUnload() {
-      const state = collect();
-      const json = JSON.stringify(state);
-      if (json === lastSyncedJson) return;
-      try {
-        fetch(SUPABASE_URL + '/rest/v1/app_state?on_conflict=key', {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates',
-          },
-          body: JSON.stringify({ key: appKey, data: state, updated_at: new Date().toISOString() }),
-          keepalive: true,
-        }).catch(() => {});
-        lastSyncedJson = json;
-      } catch (e) {}
-    }
+  /* ---------- realtime ---------- */
+  function refreshCurrentPage() {
+    window.location.reload();
+  }
+  function setupRealtime(sb) {
+    sb.channel('sync')
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'user_data',
+        filter: 'user_id=eq.' + USER_ID,
+      }, (payload) => {
+        if (!payload.new || !payload.new.key) return;
+        const incoming = payload.new.value;
+        const current = localStorage.getItem(payload.new.key);
+        if (incoming === current) return; // already up to date (e.g. our own push echoing back)
+        localStorage.setItem(payload.new.key, incoming);
+        refreshCurrentPage();
+      })
+      .subscribe();
+  }
 
-    (async function init() {
-      supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      try {
-        const { data, error } = await supa
-          .from('app_state').select('data').eq('key', appKey).maybeSingle();
-        if (!error && data && data.data && Object.keys(data.data).length > 0) {
-          lastSyncedJson = JSON.stringify(data.data);
-          applyRemote(data.data);
-        } else if (Object.keys(collect()).length > 0) {
-          schedulePush();
-        }
-      } catch (e) {}
-      supa.channel('app_state_' + appKey)
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'app_state',
-          filter: 'key=eq.' + appKey,
-        }, (payload) => {
-          if (!payload.new || !payload.new.data) return;
-          const incoming = JSON.stringify(payload.new.data);
-          if (incoming === lastSyncedJson) return;
-          lastSyncedJson = incoming;
-          applyRemote(payload.new.data);
-        })
-        .subscribe();
-    })();
+  /* ---------- start ---------- */
+  syncPull().then(() => {
+    setInterval(syncPush, 30000);
+  });
 
-    window.addEventListener('beforeunload', flushOnUnload);
-    window.addEventListener('pagehide', flushOnUnload);
-    window.addEventListener('storage', (e) => {
-      if (e.key && matches(e.key)) schedulePush();
-    });
-  };
+  const sbForRealtime = getSupabaseClient();
+  if (sbForRealtime) setupRealtime(sbForRealtime);
+
+  window.addEventListener('online', () => syncPush());
+  window.addEventListener('offline', () => setSyncDot('offline'));
 })();
